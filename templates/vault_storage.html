@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Private Vault Storage - VisionX</title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        html,
+        body {
+            margin: 0;
+            min-height: 100%;
+        }
+
+
+        body {
+
+            min-height: 100vh;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            color: #eaf5ff;
+
+            background:
+
+                radial-gradient(
+                    circle at 50% 0%,
+                    rgba(45,150,255,0.16),
+                    transparent 35%
+                ),
+
+                radial-gradient(
+                    circle at 0% 100%,
+                    rgba(70,70,220,0.12),
+                    transparent 30%
+                ),
+
+                radial-gradient(
+                    circle at 100% 20%,
+                    rgba(0,190,230,0.10),
+                    transparent 28%
+                ),
+
+                #020711;
+
+            overflow-x: hidden;
+
+        }
+
+
+        body::before {
+
+            content: "";
+
+            position: fixed;
+
+            inset: 0;
+
+            background-image:
+
+                radial-gradient(
+                    circle,
+                    rgba(255,255,255,0.65) 1px,
+                    transparent 1px
+                );
+
+            background-size: 90px 90px;
+
+            opacity: 0.10;
+
+            pointer-events: none;
+
+        }
+
+
+        /* ================================
+           HEADER
+        ================================= */
+
+        .header {
+
+            position: relative;
+
+            z-index: 10;
+
+            border-bottom:
+                1px solid
+                rgba(120,180,230,0.12);
+
+            background:
+                rgba(3,10,21,0.80);
+
+            backdrop-filter:
+                blur(18px);
+
+            padding: 17px 5%;
+
+        }
+
+
+        .header-content {
+
+            max-width: 1250px;
+
+            margin: auto;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 20px;
+
+        }
+
+
+        .brand {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+        }
+
+
+        .brand-core {
+
+            width: 40px;
+
+            height: 40px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            font-size: 11px;
+
+            font-weight: bold;
+
+            letter-spacing: 1px;
+
+            border:
+                1px solid
+                rgba(120,205,255,0.45);
+
+            background:
+                radial-gradient(
+                    circle,
+                    rgba(70,180,255,0.35),
+                    rgba(20,45,90,0.14)
+                );
+
+            box-shadow:
+                0 0 20px
+                rgba(50,170,255,0.18);
+
+        }
+
+
+        .logo {
+
+            font-size: 23px;
+
+            font-weight: 800;
+
+            letter-spacing: 4px;
+
+            color: #f3faff;
+
+        }
+
+
+        .header-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+        }
+
+
+        .dashboard-link {
+
+            text-decoration: none;
+
+            color: #bfe8ff;
+
+            border:
+                1px solid
+                rgba(120,190,240,0.18);
+
+            background:
+                rgba(255,255,255,0.035);
+
+            padding: 9px 14px;
+
+            border-radius: 8px;
+
+            font-size: 11px;
+
+            font-weight: bold;
+
+            transition: 0.25s;
+
+        }
+
+
+        .dashboard-link:hover {
+
+            background:
+                rgba(80,170,230,0.08);
+
+            border-color:
+                rgba(100,200,255,0.35);
+
+        }
+
+
+        /* ================================
+           MAIN
+        ================================= */
+
+        .container {
+
+            position: relative;
+
+            z-index: 2;
+
+            width: 90%;
+
+            max-width: 1250px;
+
+            margin: 42px auto 70px;
+
+        }
+
+
+        .title {
+
+            margin-bottom: 30px;
+
+        }
+
+
+        .eyebrow {
+
+            color: #62bff2;
+
+            font-size: 9px;
+
+            letter-spacing: 3px;
+
+            margin-bottom: 9px;
+
+        }
+
+
+        .title h1 {
+
+            margin: 0;
+
+            font-size: 32px;
+
+            color: #f1f8ff;
+
+        }
+
+
+        .title p {
+
+            margin-top: 9px;
+
+            color: #6d849c;
+
+            font-size: 13px;
+
+            line-height: 1.6;
+
+        }
+
+
+        /* ================================
+           UPLOAD AREA
+        ================================= */
+
+        .upload-section {
+
+            position: relative;
+
+            overflow: hidden;
+
+            padding: 28px;
+
+            border-radius: 17px;
+
+            margin-bottom: 25px;
+
+            border:
+                1px solid
+                rgba(100,190,250,0.16);
+
+            background:
+
+                linear-gradient(
+                    120deg,
+                    rgba(14,35,58,0.78),
+                    rgba(5,14,27,0.90)
+                );
+
+            box-shadow:
+                0 20px 60px
+                rgba(0,0,0,0.25);
+
+        }
+
+
+        .upload-section::after {
+
+            content: "";
+
+            position: absolute;
+
+            width: 280px;
+
+            height: 280px;
+
+            border-radius: 50%;
+
+            right: -100px;
+
+            top: -160px;
+
+            background:
+                rgba(60,170,255,0.06);
+
+        }
+
+
+        .upload-content {
+
+            position: relative;
+
+            z-index: 2;
+
+        }
+
+
+        .upload-label {
+
+            color: #62bff2;
+
+            font-size: 9px;
+
+            letter-spacing: 2.5px;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .upload-section h2 {
+
+            margin: 0;
+
+            font-size: 21px;
+
+            color: #edf8ff;
+
+        }
+
+
+        .upload-section p {
+
+            margin:
+                9px 0 20px;
+
+            color: #6d849c;
+
+            font-size: 12px;
+
+            line-height: 1.6;
+
+        }
+
+
+        .upload-form {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            flex-wrap: wrap;
+
+        }
+
+
+        .file-input-wrapper {
+
+            position: relative;
+
+            flex: 1;
+
+            min-width: 220px;
+
+        }
+
+
+        .file-input-wrapper input {
+
+            width: 100%;
+
+            color: #a9bfd2;
+
+            font-size: 12px;
+
+            border:
+                1px solid
+                rgba(100,180,240,0.18);
+
+            background:
+                rgba(2,10,20,0.55);
+
+            border-radius: 9px;
+
+            padding: 10px;
+
+        }
+
+
+        .file-input-wrapper input::file-selector-button {
+
+            border: none;
+
+            border-radius: 6px;
+
+            padding: 7px 11px;
+
+            margin-right: 10px;
+
+            background:
+                rgba(70,170,240,0.15);
+
+            color: #bfeaff;
+
+            font-size: 11px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+
+        .upload-btn {
+
+            border: none;
+
+            cursor: pointer;
+
+            background:
+
+                linear-gradient(
+                    135deg,
+                    #8bd8ff,
+                    #48aef5
+                );
+
+            color: #03101b;
+
+            padding: 12px 18px;
+
+            border-radius: 8px;
+
+            font-size: 12px;
+
+            font-weight: bold;
+
+            transition: 0.25s;
+
+        }
+
+
+        .upload-btn:hover {
+
+            transform:
+                translateY(-2px);
+
+        }
+
+
+        /* ================================
+           VAULT FILES
+        ================================= */
+
+        .vault-files {
+
+            padding: 27px;
+
+            border-radius: 17px;
+
+            border:
+                1px solid
+                rgba(120,180,230,0.11);
+
+            background:
+
+                linear-gradient(
+                    145deg,
+                    rgba(10,22,38,0.82),
+                    rgba(4,11,22,0.91)
+                );
+
+            box-shadow:
+                0 20px 60px
+                rgba(0,0,0,0.23);
+
+        }
+
+
+        .files-header {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 15px;
+
+            margin-bottom: 12px;
+
+        }
+
+
+        .files-header h2 {
+
+            margin: 0;
+
+            font-size: 20px;
+
+            color: #eaf5ff;
+
+        }
+
+
+        .files-count {
+
+            color: #58728a;
+
+            font-size: 10px;
+
+            letter-spacing: 1px;
+
+        }
+
+
+        .security-note {
+
+            margin-bottom: 15px;
+
+            padding: 12px 14px;
+
+            border-radius: 10px;
+
+            color: #7692a8;
+
+            background:
+                rgba(70,160,230,0.04);
+
+            border:
+                1px solid
+                rgba(90,180,240,0.10);
+
+            font-size: 10px;
+
+            line-height: 1.6;
+
+        }
+
+
+        .vault-file {
+
+            padding: 18px 0;
+
+            border-bottom:
+                1px solid
+                rgba(120,180,230,0.08);
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 20px;
+
+        }
+
+
+        .vault-file:last-child {
+
+            border-bottom: none;
+
+        }
+
+
+        .file-area {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 14px;
+
+            min-width: 0;
+
+            flex: 1;
+
+        }
+
+
+        .file-icon {
+
+            width: 46px;
+
+            height: 46px;
+
+            flex-shrink: 0;
+
+            border-radius: 11px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background:
+                rgba(70,170,240,0.08);
+
+            border:
+                1px solid
+                rgba(90,180,240,0.13);
+
+            font-size: 20px;
+
+        }
+
+
+        .file-info {
+
+            min-width: 0;
+
+        }
+
+
+        .file-name {
+
+            font-weight: bold;
+
+            color: #dceeff;
+
+            font-size: 13px;
+
+            margin-bottom: 7px;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            white-space: nowrap;
+
+        }
+
+
+        .file-details {
+
+            color: #627b92;
+
+            font-size: 10px;
+
+            line-height: 1.7;
+
+        }
+
+
+        .file-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 9px;
+
+            flex-shrink: 0;
+
+        }
+
+
+        .download-btn {
+
+            text-decoration: none;
+
+            color: #aee2ff;
+
+            border:
+                1px solid
+                rgba(90,180,240,0.16);
+
+            background:
+                rgba(70,160,230,0.045);
+
+            padding: 9px 13px;
+
+            border-radius: 8px;
+
+            font-size: 10px;
+
+            font-weight: bold;
+
+            transition: 0.25s;
+
+        }
+
+
+        .download-btn:hover {
+
+            background:
+                rgba(70,170,240,0.10);
+
+            border-color:
+                rgba(100,200,255,0.32);
+
+        }
+
+
+        .delete-form {
+
+            margin: 0;
+
+        }
+
+
+        .delete-btn {
+
+            border:
+                1px solid
+                rgba(255,100,100,0.16);
+
+            background:
+                rgba(255,70,70,0.045);
+
+            color: #ff9b9b;
+
+            padding: 9px 13px;
+
+            border-radius: 8px;
+
+            font-size: 10px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition: 0.25s;
+
+        }
+
+
+        .delete-btn:hover {
+
+            background:
+                rgba(255,70,70,0.12);
+
+            border-color:
+                rgba(255,120,120,0.30);
+
+        }
+
+
+        /* ================================
+           EMPTY STATE
+        ================================= */
+
+        .empty {
+
+            text-align: center;
+
+            color: #587189;
+
+            padding: 55px 20px;
+
+            font-size: 12px;
+
+        }
+
+
+        .empty-icon {
+
+            width: 58px;
+
+            height: 58px;
+
+            margin: 0 auto 17px;
+
+            border-radius: 50%;
+
+            border:
+                1px solid
+                rgba(100,190,250,0.15);
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            font-size: 22px;
+
+            background:
+                rgba(70,170,240,0.04);
+
+        }
+
+
+        /* ================================
+           FOOTER
+        ================================= */
+
+        .footer {
+
+            text-align: center;
+
+            margin-top: 35px;
+
+            color: #40566c;
+
+            font-size: 9px;
+
+            letter-spacing: 1.5px;
+
+        }
+
+
+        /* ================================
+           RESPONSIVE
+        ================================= */
+
+        @media (max-width: 700px) {
+
+            .vault-file {
+
+                align-items: flex-start;
+
+                flex-direction: column;
+
+            }
+
+
+            .file-actions {
+
+                margin-left: 60px;
+
+            }
+
+        }
+
+
+        @media (max-width: 550px) {
+
+            .container {
+
+                width: 92%;
+
+                margin-top: 30px;
+
+            }
+
+
+            .logo {
+
+                font-size: 18px;
+
+                letter-spacing: 3px;
+
+            }
+
+
+            .title h1 {
+
+                font-size: 26px;
+
+            }
+
+
+            .upload-section,
+            .vault-files {
+
+                padding: 20px;
+
+            }
+
+
+            .upload-form {
+
+                flex-direction: column;
+
+                align-items: stretch;
+
+            }
+
+
+            .file-input-wrapper {
+
+                width: 100%;
+
+            }
+
+
+            .file-actions {
+
+                margin-left: 0;
+
+                width: 100%;
+
+            }
+
+
+            .download-btn,
+            .delete-btn {
+
+                flex: 1;
+
+                text-align: center;
+
+            }
+
+
+            .delete-form {
+
+                flex: 1;
+
+            }
+
+
+            .delete-btn {
+
+                width: 100%;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- ================================
+     HEADER
+================================= -->
+
+<div class="header">
+
+    <div class="header-content">
+
+
+        <div class="brand">
+
+            <div class="brand-core">
+                VX
+            </div>
+
+            <div class="logo">
+                VISIONX
+            </div>
+
+        </div>
+
+
+        <div class="header-actions">
+
+            <a
+                href="{{ url_for('dashboard') }}"
+                class="dashboard-link"
+            >
+                ← Dashboard
+            </a>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+<!-- ================================
+     MAIN
+================================= -->
+
+<div class="container">
+
+
+    <div class="title">
+
+        <div class="eyebrow">
+            PRIVATE ENCRYPTED STORAGE
+        </div>
+
+        <h1>
+            Private Vault
+        </h1>
+
+        <p>
+            Your files are stored in VisionX encrypted
+            vault storage and can only be accessed
+            through your authenticated account.
+        </p>
+
+    </div>
+
+
+
+    <!-- ================================
+         FILE UPLOAD
+    ================================= -->
+
+    <div class="upload-section">
+
+        <div class="upload-content">
+
+
+            <div class="upload-label">
+                SECURE FILE UPLOAD
+            </div>
+
+
+            <h2>
+                Add Files to Your Vault
+            </h2>
+
+
+            <p>
+                Select a file and VisionX will encrypt
+                its contents before storing it inside
+                your Private Vault.
+            </p>
+
+
+            <form
+                method="POST"
+                action="{{ url_for('vault_upload') }}"
+                enctype="multipart/form-data"
+                class="upload-form"
+            >
+
+
+                <div class="file-input-wrapper">
+
+                    <input
+                        type="file"
+                        name="file"
+                        required
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="upload-btn"
+                >
+
+                    🔐 Encrypt & Upload
+
+                </button>
+
+
+            </form>
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================================
+         FILE LIST
+    ================================= -->
+
+    <div class="vault-files">
+
+
+        <div class="files-header">
+
+            <h2>
+                Encrypted Files
+            </h2>
+
+
+            <div class="files-count">
+
+                {{ files|length }}
+                FILES SECURED
+
+            </div>
+
+
+        </div>
+
+
+        <div class="security-note">
+
+            🔐 Files are encrypted before storage.
+            Downloads are decrypted temporarily only
+            when requested by the authenticated owner.
+
+        </div>
+
+
+
+        {% if files %}
+
+
+            {% for file in files %}
+
+
+                <div class="vault-file">
+
+
+                    <div class="file-area">
+
+
+                        <div class="file-icon">
+                            🔐
+                        </div>
+
+
+                        <div class="file-info">
+
+
+                            <div class="file-name">
+
+                                {{ file.original_filename }}
+
+                            </div>
+
+
+                            <div class="file-details">
+
+                                Type:
+                                {{ file.file_type }}
+
+                                &nbsp; • &nbsp;
+
+                                Size:
+                                {{ file.file_size }} bytes
+
+                                &nbsp; • &nbsp;
+
+                                Added:
+                                {{ file.created_at.strftime('%d %b %Y, %I:%M %p') }}
+
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+                    <div class="file-actions">
+
+
+                        <a
+                            href="{{ url_for(
+                                'vault_download',
+                                file_id=file.id
+                            ) }}"
+                            class="download-btn"
+                        >
+
+                            Download
+
+                        </a>
+
+
+
+                        <form
+                            method="POST"
+                            action="{{ url_for(
+                                'vault_delete',
+                                file_id=file.id
+                            ) }}"
+                            class="delete-form"
+                            onsubmit="return confirm('Are you sure you want to permanently delete this file from your Vault?');"
+                        >
+
+                            <button
+                                type="submit"
+                                class="delete-btn"
+                            >
+
+                                Delete
+
+                            </button>
+
+                        </form>
+
+
+                    </div>
+
+
+                </div>
+
+
+            {% endfor %}
+
+
+        {% else %}
+
+
+            <div class="empty">
+
+
+                <div class="empty-icon">
+                    🔐
+                </div>
+
+
+                Your Private Vault is empty.
+
+                <br><br>
+
+                Upload your first file to encrypt
+                and securely store it.
+
+
+            </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+
+    <div class="footer">
+
+        VISIONX • PRIVATE VAULT • ENCRYPTED STORAGE
+
+    </div>
+
+
+</div>
+
+
+</body>
+
+</html>  

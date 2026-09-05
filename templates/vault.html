@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Private Vault - VisionX</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+
+            font-family: Arial, Helvetica, sans-serif;
+
+            background:
+                radial-gradient(
+                    circle at top left,
+                    #1e3a8a,
+                    transparent 35%
+                ),
+                radial-gradient(
+                    circle at bottom right,
+                    #312e81,
+                    transparent 35%
+                ),
+                #020617;
+
+            color: white;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 470px;
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.95);
+
+            border: 1px solid rgba(148, 163, 184, 0.25);
+
+            border-radius: 24px;
+
+            padding: 40px 35px;
+
+            text-align: center;
+
+            box-shadow:
+                0 25px 70px rgba(0, 0, 0, 0.5);
+
+            backdrop-filter: blur(14px);
+        }
+
+        .vault-icon {
+            width: 82px;
+            height: 82px;
+
+            margin: 0 auto 22px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background: rgba(59, 130, 246, 0.15);
+
+            border: 1px solid rgba(96, 165, 250, 0.3);
+
+            font-size: 38px;
+        }
+
+        h1 {
+            font-size: 29px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+
+            font-size: 14px;
+
+            line-height: 1.6;
+
+            margin-bottom: 28px;
+        }
+
+        .security-box {
+            text-align: left;
+
+            background: rgba(30, 41, 59, 0.7);
+
+            border: 1px solid rgba(148, 163, 184, 0.15);
+
+            border-radius: 14px;
+
+            padding: 16px;
+
+            margin-bottom: 25px;
+
+            font-size: 13px;
+
+            line-height: 1.6;
+
+            color: #cbd5e1;
+        }
+
+        .security-box strong {
+            color: #60a5fa;
+        }
+
+        .form-group {
+            text-align: left;
+
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+
+            margin-bottom: 8px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            color: #e2e8f0;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+
+            padding: 14px 48px 14px 16px;
+
+            border-radius: 12px;
+
+            border: 1px solid #334155;
+
+            background: #0f172a;
+
+            color: white;
+
+            font-size: 15px;
+
+            outline: none;
+
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: #60a5fa;
+
+            box-shadow:
+                0 0 0 3px rgba(96, 165, 250, 0.12);
+        }
+
+        input::placeholder {
+            color: #64748b;
+        }
+
+        .toggle-password {
+            position: absolute;
+
+            right: 14px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            background: none;
+
+            border: none;
+
+            color: #94a3b8;
+
+            cursor: pointer;
+
+            font-size: 17px;
+
+            padding: 3px;
+        }
+
+        .toggle-password:hover {
+            color: white;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.12);
+
+            border: 1px solid rgba(239, 68, 68, 0.3);
+
+            color: #fca5a5;
+
+            padding: 12px;
+
+            border-radius: 10px;
+
+            margin-bottom: 20px;
+
+            font-size: 13px;
+
+            line-height: 1.5;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            background: #2563eb;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            transition: 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            background: #1d4ed8;
+
+            transform: translateY(-1px);
+        }
+
+        .back {
+            display: inline-block;
+
+            margin-top: 22px;
+
+            color: #94a3b8;
+
+            text-decoration: none;
+
+            font-size: 14px;
+        }
+
+        .back:hover {
+            color: white;
+        }
+
+        .features {
+            display: grid;
+
+            grid-template-columns: repeat(3, 1fr);
+
+            gap: 10px;
+
+            margin-top: 25px;
+        }
+
+        .feature {
+            padding: 11px 5px;
+
+            border-radius: 10px;
+
+            background: rgba(30, 41, 59, 0.5);
+
+            color: #94a3b8;
+
+            font-size: 11px;
+        }
+
+        .feature-icon {
+            display: block;
+
+            font-size: 18px;
+
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 500px) {
+            .card {
+                padding: 30px 22px;
+            }
+
+            h1 {
+                font-size: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="card">
+
+            <div class="vault-icon">
+                🔐
+            </div>
+
+            <h1>
+                Private Vault
+            </h1>
+
+            <p class="subtitle">
+                Secure your sensitive files inside
+                VisionX's encrypted private storage.
+            </p>
+
+
+            {% if error %}
+
+                <div class="error">
+                    {{ error }}
+                </div>
+
+            {% endif %}
+
+
+            <div class="security-box">
+
+                {% if current_user.vault_password_hash %}
+
+                    <strong>🔒 Vault Locked</strong><br>
+
+                    Enter your Vault password to
+                    access your encrypted files.
+
+                {% else %}
+
+                    <strong>🛡️ Create Your Vault</strong><br>
+
+                    This is your first time using the
+                    Private Vault. Create a strong
+                    password to protect your files.
+
+                {% endif %}
+
+            </div>
+
+
+            <form
+                method="POST"
+                action="{{ url_for('vault') }}"
+            >
+
+                <div class="form-group">
+
+                    <label for="vault_password">
+                        {% if current_user.vault_password_hash %}
+                            Vault Password
+                        {% else %}
+                            Create Vault Password
+                        {% endif %}
+                    </label>
+
+                    <div class="password-wrapper">
+
+                        <input
+                            type="password"
+                            id="vault_password"
+                            name="vault_password"
+                            placeholder="Enter your Vault password"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="toggle-password"
+                            onclick="togglePassword()"
+                            aria-label="Show or hide password"
+                        >
+                            👁
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <button type="submit">
+
+                    {% if current_user.vault_password_hash %}
+                        Unlock Private Vault
+                    {% else %}
+                        Create Private Vault
+                    {% endif %}
+
+                </button>
+
+            </form>
+
+
+            <div class="features">
+
+                <div class="feature">
+                    <span class="feature-icon">🔐</span>
+                    Encrypted
+                </div>
+
+                <div class="feature">
+                    <span class="feature-icon">🛡️</span>
+                    Private
+                </div>
+
+                <div class="feature">
+                    <span class="feature-icon">📁</span>
+                    Secure Storage
+                </div>
+
+            </div>
+
+
+            <a
+                href="{{ url_for('dashboard') }}"
+                class="back"
+            >
+                ← Back to Dashboard
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        function togglePassword() {
+
+            const input =
+                document.getElementById(
+                    "vault_password"
+                );
+
+            const button =
+                document.querySelector(
+                    ".toggle-password"
+                );
+
+
+            if (input.type === "password") {
+
+                input.type = "text";
+
+                button.textContent = "🙈";
+
+            } else {
+
+                input.type = "password";
+
+                button.textContent = "👁";
+
+            }
+
+        }
+
+    </script>
+
+</body>
+</html>

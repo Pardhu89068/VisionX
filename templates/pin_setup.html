@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Security PIN - VisionX</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-family: Arial, Helvetica, sans-serif;
+
+            background:
+                radial-gradient(
+                    circle at top left,
+                    #1e3a8a,
+                    transparent 35%
+                ),
+                radial-gradient(
+                    circle at bottom right,
+                    #312e81,
+                    transparent 35%
+                ),
+                #020617;
+
+            color: white;
+
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 460px;
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.94);
+
+            border: 1px solid rgba(148, 163, 184, 0.25);
+
+            border-radius: 22px;
+
+            padding: 40px 35px;
+
+            box-shadow:
+                0 25px 60px rgba(0, 0, 0, 0.45);
+
+            backdrop-filter: blur(12px);
+
+            text-align: center;
+        }
+
+        .icon {
+            width: 75px;
+            height: 75px;
+
+            margin: 0 auto 20px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 50%;
+
+            background: rgba(59, 130, 246, 0.15);
+
+            border: 1px solid rgba(96, 165, 250, 0.3);
+
+            font-size: 34px;
+        }
+
+        h1 {
+            font-size: 28px;
+
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+
+            font-size: 14px;
+
+            line-height: 1.6;
+
+            margin-bottom: 30px;
+        }
+
+        .info {
+            background: rgba(30, 41, 59, 0.7);
+
+            border: 1px solid rgba(148, 163, 184, 0.15);
+
+            border-radius: 12px;
+
+            padding: 14px;
+
+            margin-bottom: 25px;
+
+            text-align: left;
+
+            color: #cbd5e1;
+
+            font-size: 13px;
+
+            line-height: 1.6;
+        }
+
+        .info strong {
+            color: #60a5fa;
+        }
+
+        .form-group {
+            text-align: left;
+
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+
+            margin-bottom: 8px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            color: #e2e8f0;
+        }
+
+        input {
+            width: 100%;
+
+            padding: 14px 16px;
+
+            border-radius: 12px;
+
+            border: 1px solid #334155;
+
+            background: #0f172a;
+
+            color: white;
+
+            font-size: 18px;
+
+            letter-spacing: 6px;
+
+            text-align: center;
+
+            outline: none;
+
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: #60a5fa;
+
+            box-shadow:
+                0 0 0 3px rgba(96, 165, 250, 0.12);
+        }
+
+        input::placeholder {
+            color: #64748b;
+
+            letter-spacing: 4px;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.12);
+
+            border: 1px solid rgba(239, 68, 68, 0.3);
+
+            color: #fca5a5;
+
+            padding: 12px;
+
+            border-radius: 10px;
+
+            margin-bottom: 20px;
+
+            font-size: 13px;
+        }
+
+        button {
+            width: 100%;
+
+            padding: 14px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            background: #2563eb;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+
+            transform: translateY(-1px);
+        }
+
+        .back {
+            display: inline-block;
+
+            margin-top: 22px;
+
+            color: #94a3b8;
+
+            text-decoration: none;
+
+            font-size: 14px;
+        }
+
+        .back:hover {
+            color: white;
+        }
+
+        .requirements {
+            margin-top: 20px;
+
+            color: #64748b;
+
+            font-size: 12px;
+
+            line-height: 1.6;
+        }
+
+        @media (max-width: 500px) {
+
+            .card {
+                padding: 30px 22px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="card">
+
+            <div class="icon">
+                🔐
+            </div>
+
+            <h1>
+                Create Security PIN
+            </h1>
+
+            <p class="subtitle">
+                Create a 6-digit Security PIN for
+                account recovery and additional
+                VisionX protection.
+            </p>
+
+
+            <div class="info">
+
+                <strong>Important:</strong><br>
+
+                Your Security PIN will be securely
+                stored and can be used later when
+                you need to recover your account.
+
+                <br><br>
+
+                You only need to create this PIN
+                once.
+
+            </div>
+
+
+            {% if error %}
+
+                <div class="error">
+                    {{ error }}
+                </div>
+
+            {% endif %}
+
+
+            <form
+                method="POST"
+                action="{{ url_for('pin_setup') }}"
+            >
+
+                <div class="form-group">
+
+                    <label for="pin">
+                        Security PIN
+                    </label>
+
+                    <input
+                        type="password"
+                        id="pin"
+                        name="pin"
+                        placeholder="••••••"
+                        inputmode="numeric"
+                        pattern="[0-9]{6}"
+                        maxlength="6"
+                        minlength="6"
+                        autocomplete="new-password"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="confirm_pin">
+                        Confirm Security PIN
+                    </label>
+
+                    <input
+                        type="password"
+                        id="confirm_pin"
+                        name="confirm_pin"
+                        placeholder="••••••"
+                        inputmode="numeric"
+                        pattern="[0-9]{6}"
+                        maxlength="6"
+                        minlength="6"
+                        autocomplete="new-password"
+                        required
+                    >
+
+                </div>
+
+
+                <button type="submit">
+                    Create Security PIN
+                </button>
+
+            </form>
+
+
+            <a
+                href="{{ url_for('dashboard') }}"
+                class="back"
+            >
+                ← Back to Dashboard
+            </a>
+
+
+            <div class="requirements">
+
+                PIN must contain exactly 6 numbers.
+
+                <br>
+
+                Once created, it cannot be recreated
+                from this page.
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        const pinInput =
+            document.getElementById("pin");
+
+        const confirmPinInput =
+            document.getElementById("confirm_pin");
+
+
+        function allowOnlyNumbers(input) {
+
+            input.addEventListener(
+                "input",
+                function () {
+
+                    this.value =
+                        this.value
+                        .replace(/\D/g, "")
+                        .slice(0, 6);
+
+                }
+            );
+
+        }
+
+
+        allowOnlyNumbers(pinInput);
+
+        allowOnlyNumbers(confirmPinInput);
+
+    </script>
+
+</body>
+</html>

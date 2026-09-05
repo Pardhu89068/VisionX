@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Verify PIN - VisionX</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(
+                135deg,
+                #08111f,
+                #102a43,
+                #071827
+            );
+            color: white;
+        }
+
+        .box {
+            width: 90%;
+            max-width: 450px;
+            padding: 35px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        p {
+            text-align: center;
+            color: #b8c7d9;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #38536d;
+            background: #13283d;
+            color: white;
+            font-size: 20px;
+            letter-spacing: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: 0;
+            border-radius: 10px;
+            background: #1976d2;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .error {
+            color: #ffb0b0;
+            background: rgba(255,0,0,0.12);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1>Verify Recovery PIN</h1>
+
+    <p>
+        Enter your 6-digit Recovery PIN.
+    </p>
+
+    {% if error %}
+
+    <div class="error">
+        {{ error }}
+    </div>
+
+    {% endif %}
+
+    <form method="POST">
+
+        <input
+            type="password"
+            name="pin"
+            inputmode="numeric"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            placeholder="••••••"
+            required
+        >
+
+        <button type="submit">
+            Verify PIN
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

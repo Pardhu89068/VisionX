@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Security Questions - VisionX</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #08111f, #102a43, #071827);
+            color: white;
+            padding: 30px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 35px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .logo {
+            text-align: center;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #b8c7d9;
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+
+        .question-box {
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #e7eef7;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #13283d;
+            color: white;
+            font-size: 15px;
+            outline: none;
+        }
+
+        select:focus,
+        input:focus {
+            border-color: #4da3ff;
+            box-shadow: 0 0 0 2px rgba(77, 163, 255, 0.15);
+        }
+
+        option {
+            background: #13283d;
+            color: white;
+        }
+
+        .info {
+            background: rgba(77, 163, 255, 0.1);
+            border-left: 4px solid #4da3ff;
+            padding: 13px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            color: #d8e8f8;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .error {
+            background: rgba(255, 80, 80, 0.12);
+            border-left: 4px solid #ff6b6b;
+            padding: 13px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #ffb3b3;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #1976d2, #42a5f5);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(66, 165, 245, 0.25);
+        }
+
+        .required {
+            color: #ff6b6b;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="logo">
+        VisionX
+    </div>
+
+    <div class="subtitle">
+        Security Questions Setup
+    </div>
+
+    <div class="info">
+        Select any <strong>2 different questions</strong> and provide answers.
+        These answers can be used to recover your account if you forget your password.
+    </div>
+
+    {% if error %}
+        <div class="error">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <form method="POST">
+
+        <!-- QUESTION 1 -->
+
+        <div class="question-box">
+
+            <label>
+                Security Question 1 <span class="required">*</span>
+            </label>
+
+            <select name="question_1" id="question1" required>
+
+                <option value="">
+                    -- Select your first question --
+                </option>
+
+                <option value="What is your Crush name?">
+                    What is your Crush name?
+                </option>
+
+                <option value="What is your Father name?">
+                    What is your Father name?
+                </option>
+
+                <option value="What is your Mother name?">
+                    What is your Mother name?
+                </option>
+
+                <option value="What is your Childhood nickname?">
+                    What is your Childhood nickname?
+                </option>
+
+                <option value="What is your Girl Bestie name?">
+                    What is your Girl Bestie name?
+                </option>
+
+                <option value="What is your School name?">
+                    What is your School name?
+                </option>
+
+                <option value="What is your First Pet's Name?">
+                    What is your First Pet's Name?
+                </option>
+
+                <option value="What is your Favorite Teacher's name?">
+                    What is your Favorite Teacher's name?
+                </option>
+
+                <option value="What is your Best Friend's name?">
+                    What is your Best Friend's name?
+                </option>
+
+                <option value="What is your Favorite Place in the World?">
+                    What is your Favorite Place in the World?
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- ANSWER 1 -->
+
+        <div class="question-box">
+
+            <label>
+                Answer to Question 1 <span class="required">*</span>
+            </label>
+
+            <input
+                type="text"
+                name="answer_1"
+                placeholder="Enter your answer"
+                required
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <!-- QUESTION 2 -->
+
+        <div class="question-box">
+
+            <label>
+                Security Question 2 <span class="required">*</span>
+            </label>
+
+            <select name="question_2" id="question2" required>
+
+                <option value="">
+                    -- Select your second question --
+                </option>
+
+                <option value="What is your Crush name?">
+                    What is your Crush name?
+                </option>
+
+                <option value="What is your Father name?">
+                    What is your Father name?
+                </option>
+
+                <option value="What is your Mother name?">
+                    What is your Mother name?
+                </option>
+
+                <option value="What is your Childhood nickname?">
+                    What is your Childhood nickname?
+                </option>
+
+                <option value="What is your Girl Bestie name?">
+                    What is your Girl Bestie name?
+                </option>
+
+                <option value="What is your School name?">
+                    What is your School name?
+                </option>
+
+                <option value="What is your First Pet's Name?">
+                    What is your First Pet's Name?
+                </option>
+
+                <option value="What is your Favorite Teacher's name?">
+                    What is your Favorite Teacher's name?
+                </option>
+
+                <option value="What is your Best Friend's name?">
+                    What is your Best Friend's name?
+                </option>
+
+                <option value="What is your Favorite Place in the World?">
+                    What is your Favorite Place in the World?
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- ANSWER 2 -->
+
+        <div class="question-box">
+
+            <label>
+                Answer to Question 2 <span class="required">*</span>
+            </label>
+
+            <input
+                type="text"
+                name="answer_2"
+                placeholder="Enter your answer"
+                required
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <button type="submit">
+            Save Security Questions
+        </button>
+
+    </form>
+
+</div>
+
+
+<script>
+
+    const question1 = document.getElementById("question1");
+    const question2 = document.getElementById("question2");
+
+    function disableSelectedQuestion() {
+
+        for (let option of question2.options) {
+            option.disabled = false;
+        }
+
+        if (question1.value !== "") {
+
+            for (let option of question2.options) {
+
+                if (option.value === question1.value) {
+                    option.disabled = true;
+                }
+
+            }
+
+        }
+
+        if (question2.value === question1.value) {
+            question2.value = "";
+        }
+    }
+
+    question1.addEventListener(
+        "change",
+        disableSelectedQuestion
+    );
+
+    question2.addEventListener(
+        "change",
+        function () {
+
+            if (this.value === question1.value) {
+
+                alert(
+                    "Please select two different security questions."
+                );
+
+                this.value = "";
+            }
+
+        }
+    );
+
+</script>
+
+</body>
+</html>

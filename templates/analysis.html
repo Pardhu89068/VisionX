@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>VisionX - File Analysis</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+        }
+
+        .header {
+            background: #111827;
+            color: white;
+            padding: 22px 40px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 40px auto;
+        }
+
+        .title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .title h1 {
+            margin-bottom: 8px;
+        }
+
+        .title p {
+            color: #6b7280;
+        }
+
+        .ai-card {
+            background: #111827;
+            color: white;
+            padding: 25px;
+            border-radius: 14px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+        }
+
+        .ai-card h2 {
+            margin-top: 0;
+        }
+
+        .ai-result {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .ai-box {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 18px;
+            border-radius: 10px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .result-card {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .label {
+            display: block;
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .back {
+            display: block;
+            width: fit-content;
+            margin: 30px auto 0;
+            padding: 11px 18px;
+            background: #111827;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 700px) {
+
+            .result-grid,
+            .ai-result {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <div class="header">
+
+        <div class="logo">
+            VISIONX
+        </div>
+
+        <div class="subtitle">
+            Intelligent Document Analysis System
+        </div>
+
+    </div>
+
+
+
+    <div class="container">
+
+
+        <div class="title">
+
+            <h1>
+                Document Analysis
+            </h1>
+
+            <p>
+                📄 {{ filename }}
+            </p>
+
+        </div>
+
+
+
+        <!-- AI ANALYSIS -->
+
+        <div class="ai-card">
+
+            <h2>
+                🤖 AI Document Analysis
+            </h2>
+
+            <p>
+                AI-assisted document identification
+                and confidence assessment.
+            </p>
+
+
+            <div class="ai-result">
+
+
+                <div class="ai-box">
+
+                    <span class="label">
+                        Document Type
+                    </span>
+
+                    <strong>
+                        {{ ai_type }}
+                    </strong>
+
+                </div>
+
+
+                <div class="ai-box">
+
+                    <span class="label">
+                        Confidence
+                    </span>
+
+                    <strong>
+                        {{ ai_confidence }}
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+
+        <!-- STANDARD ANALYSIS -->
+
+        <div class="result-grid">
+
+
+            <div class="result-card">
+
+                <span class="label">
+                    Category
+                </span>
+
+                <div class="value">
+                    {{ category }}
+                </div>
+
+            </div>
+
+
+            <div class="result-card">
+
+                <span class="label">
+                    Sensitivity
+                </span>
+
+                <div class="value">
+                    {{ sensitivity }}
+                </div>
+
+            </div>
+
+
+            <div class="result-card">
+
+                <span class="label">
+                    Purpose
+                </span>
+
+                <div class="value">
+                    {{ purpose }}
+                </div>
+
+            </div>
+
+
+            <div class="result-card">
+
+                <span class="label">
+                    Retention Recommendation
+                </span>
+
+                <div class="value">
+                    {{ retention }}
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <a
+            class="back"
+            href="{{ url_for('dashboard') }}"
+        >
+
+            ← Back to Dashboard
+
+        </a>
+
+
+    </div>
+
+
+</body>
+
+</html>
