@@ -1,30 +1,898 @@
+```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>VISIONX - Upload File</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>VISIONX — Upload Document</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #f8fafc;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(88, 166, 255, 0.14), transparent 30%),
+                radial-gradient(circle at 85% 80%, rgba(139, 92, 246, 0.13), transparent 30%),
+                #050816;
+        }
+
+        /* ---------------- BACKGROUND ---------------- */
+
+        .background {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .grid {
+            position: absolute;
+            inset: 0;
+
+            background-image:
+                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+
+            background-size: 45px 45px;
+
+            mask-image: linear-gradient(
+                to bottom,
+                transparent,
+                black 20%,
+                black 80%,
+                transparent
+            );
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.22;
+        }
+
+        .orb-one {
+            width: 280px;
+            height: 280px;
+            background: #2563eb;
+            top: -100px;
+            left: -80px;
+        }
+
+        .orb-two {
+            width: 300px;
+            height: 300px;
+            background: #7c3aed;
+            bottom: -120px;
+            right: -80px;
+        }
+
+        /* ---------------- TOP BAR ---------------- */
+
+        .topbar {
+            position: relative;
+            z-index: 5;
+
+            height: 76px;
+            width: 100%;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 42px;
+
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+
+            background: rgba(5, 8, 22, 0.68);
+            backdrop-filter: blur(18px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        .brand-mark {
+            width: 35px;
+            height: 35px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 10px;
+
+            background:
+                linear-gradient(135deg, #60a5fa, #8b5cf6);
+
+            box-shadow:
+                0 0 25px rgba(96,165,250,0.35);
+
+            font-size: 17px;
+        }
+
+        .brand span {
+            color: #e2e8f0;
+        }
+
+        .brand strong {
+            color: #60a5fa;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: #cbd5e1;
+
+            padding: 10px 17px;
+
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+
+            background: rgba(255,255,255,0.035);
+
+            transition: 0.25s ease;
+        }
+
+        .back-btn:hover {
+            color: white;
+            border-color: rgba(96,165,250,0.5);
+            background: rgba(96,165,250,0.08);
+            transform: translateY(-1px);
+        }
+
+        /* ---------------- MAIN ---------------- */
+
+        .page {
+            position: relative;
+            z-index: 2;
+
+            width: min(920px, calc(100% - 36px));
+
+            margin: 0 auto;
+            padding: 72px 0 90px;
+
+            text-align: center;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+
+            padding: 7px 13px;
+
+            border-radius: 999px;
+
+            color: #93c5fd;
+
+            background: rgba(59,130,246,0.08);
+            border: 1px solid rgba(96,165,250,0.18);
+
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #4ade80;
+
+            box-shadow: 0 0 10px #4ade80;
+        }
+
+        h1 {
+            margin: 23px 0 13px;
+
+            font-size: clamp(38px, 6vw, 66px);
+            line-height: 1.05;
+
+            letter-spacing: -2.5px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    #ffffff 0%,
+                    #bfdbfe 45%,
+                    #a78bfa 100%
+                );
+
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            max-width: 620px;
+            margin: 0 auto;
+
+            color: #94a3b8;
+
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        /* ---------------- UPLOAD CARD ---------------- */
+
+        .upload-card {
+            position: relative;
+
+            margin-top: 48px;
+            padding: 12px;
+
+            border-radius: 25px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(96,165,250,0.14),
+                    rgba(139,92,246,0.10)
+                );
+
+            border: 1px solid rgba(255,255,255,0.10);
+
+            box-shadow:
+                0 30px 90px rgba(0,0,0,0.40),
+                0 0 60px rgba(59,130,246,0.06);
+        }
+
+        .upload-inner {
+            position: relative;
+
+            min-height: 370px;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+
+            padding: 45px 25px;
+
+            border-radius: 17px;
+
+            background:
+                radial-gradient(
+                    circle at 50% 0%,
+                    rgba(59,130,246,0.10),
+                    transparent 45%
+                ),
+                rgba(7, 12, 30, 0.88);
+
+            border: 1px dashed rgba(148,163,184,0.25);
+
+            transition: 0.3s ease;
+        }
+
+        .upload-inner.dragover {
+            border-color: #60a5fa;
+
+            background:
+                radial-gradient(
+                    circle at 50% 0%,
+                    rgba(59,130,246,0.18),
+                    transparent 50%
+                ),
+                rgba(10, 20, 45, 0.95);
+
+            box-shadow:
+                inset 0 0 50px rgba(59,130,246,0.08),
+                0 0 40px rgba(59,130,246,0.10);
+        }
+
+        /* ---------------- ICON ---------------- */
+
+        .upload-icon {
+            width: 82px;
+            height: 82px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 22px;
+
+            margin-bottom: 23px;
+
+            font-size: 38px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(59,130,246,0.18),
+                    rgba(139,92,246,0.18)
+                );
+
+            border: 1px solid rgba(147,197,253,0.18);
+
+            box-shadow:
+                0 0 40px rgba(59,130,246,0.12);
+        }
+
+        .upload-inner h2 {
+            margin: 0 0 9px;
+
+            font-size: 25px;
+            font-weight: 700;
+        }
+
+        .upload-inner p {
+            margin: 0;
+
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        /* ---------------- FILE INPUT ---------------- */
+
+        #fileInput {
+            display: none;
+        }
+
+        .choose-btn {
+            margin-top: 27px;
+
+            min-width: 185px;
+
+            padding: 13px 23px;
+
+            border: 0;
+            border-radius: 11px;
+
+            cursor: pointer;
+
+            color: white;
+
+            font-size: 14px;
+            font-weight: 700;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #2563eb,
+                    #7c3aed
+                );
+
+            box-shadow:
+                0 10px 30px rgba(37,99,235,0.25);
+
+            transition: 0.25s ease;
+        }
+
+        .choose-btn:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 14px 35px rgba(37,99,235,0.35);
+        }
+
+        /* ---------------- SELECTED FILE ---------------- */
+
+        .selected-file {
+            display: none;
+
+            width: min(520px, 100%);
+
+            margin-top: 22px;
+            padding: 13px 16px;
+
+            align-items: center;
+            gap: 12px;
+
+            text-align: left;
+
+            border-radius: 12px;
+
+            background: rgba(34,197,94,0.06);
+            border: 1px solid rgba(74,222,128,0.16);
+        }
+
+        .selected-file.show {
+            display: flex;
+        }
+
+        .file-symbol {
+            width: 35px;
+            height: 35px;
+
+            flex-shrink: 0;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 9px;
+
+            background: rgba(59,130,246,0.13);
+        }
+
+        .file-details {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .file-name {
+            color: #e2e8f0;
+
+            font-size: 13px;
+            font-weight: 700;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-type {
+            margin-top: 3px;
+
+            color: #64748b;
+            font-size: 11px;
+        }
+
+        .remove-file {
+            border: none;
+            background: transparent;
+
+            color: #64748b;
+
+            cursor: pointer;
+
+            font-size: 18px;
+        }
+
+        .remove-file:hover {
+            color: #f87171;
+        }
+
+        /* ---------------- SUBMIT ---------------- */
+
+        .submit-btn {
+            display: none;
+
+            margin-top: 25px;
+
+            width: min(520px, 100%);
+
+            padding: 15px 20px;
+
+            border: none;
+            border-radius: 12px;
+
+            cursor: pointer;
+
+            color: white;
+
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #3b82f6,
+                    #8b5cf6
+                );
+
+            box-shadow:
+                0 12px 35px rgba(59,130,246,0.20);
+
+            transition: 0.25s ease;
+        }
+
+        .submit-btn.show {
+            display: block;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+
+            box-shadow:
+                0 16px 40px rgba(59,130,246,0.30);
+        }
+
+        /* ---------------- INFO ---------------- */
+
+        .info-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 25px;
+
+            margin-top: 25px;
+
+            color: #64748b;
+
+            font-size: 12px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .info-item span:first-child {
+            color: #60a5fa;
+        }
+
+        /* ---------------- RESPONSIVE ---------------- */
+
+        @media (max-width: 650px) {
+
+            .topbar {
+                padding: 0 18px;
+            }
+
+            .brand {
+                font-size: 17px;
+            }
+
+            .page {
+                padding-top: 48px;
+            }
+
+            .upload-card {
+                margin-top: 35px;
+            }
+
+            .upload-inner {
+                min-height: 350px;
+                padding: 35px 18px;
+            }
+
+            .back-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-    <h1>VISIONX</h1>
+<div class="background">
+    <div class="grid"></div>
+    <div class="orb orb-one"></div>
+    <div class="orb orb-two"></div>
+</div>
 
-    <h2>Upload File</h2>
+<!-- TOP BAR -->
 
-    <p>Select a file to upload for analysis.</p>
+<header class="topbar">
 
-    <form method="POST" enctype="multipart/form-data">
+    <div class="brand">
+        <div class="brand-mark">✦</div>
 
-        <input type="file" name="file" required>
+        <span>
+            VISION<strong>X</strong>
+        </span>
+    </div>
 
-        <br><br>
+    <a href="{{ url_for('dashboard') }}" class="back-btn">
+        ← Dashboard
+    </a>
 
-        <button type="submit">UPLOAD FILE</button>
+</header>
+
+
+<!-- MAIN -->
+
+<main class="page">
+
+    <div class="eyebrow">
+        <span class="status-dot"></span>
+        Secure Document Intelligence
+    </div>
+
+    <h1>
+        Add a Document
+    </h1>
+
+    <p class="subtitle">
+        Upload your document and let VisionX analyze,
+        classify and organize your digital information intelligently.
+    </p>
+
+
+    <!-- UPLOAD -->
+
+    <form
+        method="POST"
+        enctype="multipart/form-data"
+        id="uploadForm"
+    >
+
+        <div class="upload-card">
+
+            <div
+                class="upload-inner"
+                id="dropZone"
+            >
+
+                <div class="upload-icon">
+                    📄
+                </div>
+
+                <h2>
+                    Drop your document here
+                </h2>
+
+                <p>
+                    or choose a PDF file from your computer
+                </p>
+
+
+                <input
+                    type="file"
+                    id="fileInput"
+                    name="file"
+                    accept=".pdf,application/pdf"
+                >
+
+
+                <button
+                    type="button"
+                    class="choose-btn"
+                    id="chooseBtn"
+                >
+                    Choose PDF
+                </button>
+
+
+                <div
+                    class="selected-file"
+                    id="selectedFile"
+                >
+
+                    <div class="file-symbol">
+                        📑
+                    </div>
+
+                    <div class="file-details">
+
+                        <div
+                            class="file-name"
+                            id="fileName"
+                        ></div>
+
+                        <div class="file-type">
+                            PDF document selected
+                        </div>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="remove-file"
+                        id="removeFile"
+                        aria-label="Remove file"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="submit-btn"
+                    id="submitBtn"
+                >
+                    🚀 Upload & Analyze
+                </button>
+
+            </div>
+
+        </div>
 
     </form>
 
-    <br>
 
-    <a href="/dashboard">Back to Dashboard</a>
+    <div class="info-row">
+
+        <div class="info-item">
+            <span>🔒</span>
+            Secure processing
+        </div>
+
+        <div class="info-item">
+            <span>📄</span>
+            PDF supported
+        </div>
+
+        <div class="info-item">
+            <span>✦</span>
+            VisionX analysis
+        </div>
+
+    </div>
+
+</main>
+
+
+<script>
+
+    const fileInput = document.getElementById("fileInput");
+    const chooseBtn = document.getElementById("chooseBtn");
+    const dropZone = document.getElementById("dropZone");
+
+    const selectedFile = document.getElementById("selectedFile");
+    const fileName = document.getElementById("fileName");
+
+    const removeFile = document.getElementById("removeFile");
+    const submitBtn = document.getElementById("submitBtn");
+
+
+    /* --------------------------------
+       CHOOSE FILE
+    -------------------------------- */
+
+    chooseBtn.addEventListener("click", function () {
+        fileInput.click();
+    });
+
+
+    /* --------------------------------
+       FILE SELECTED
+    -------------------------------- */
+
+    fileInput.addEventListener("change", function () {
+
+        if (fileInput.files.length > 0) {
+
+            showSelectedFile(fileInput.files[0]);
+
+        }
+
+    });
+
+
+    /* --------------------------------
+       SHOW FILE
+    -------------------------------- */
+
+    function showSelectedFile(file) {
+
+        if (!file) {
+            return;
+        }
+
+        const isPDF =
+            file.type === "application/pdf" ||
+            file.name.toLowerCase().endsWith(".pdf");
+
+        if (!isPDF) {
+
+            alert("Please select a PDF file.");
+
+            fileInput.value = "";
+
+            return;
+        }
+
+
+        fileName.textContent = file.name;
+
+        selectedFile.classList.add("show");
+
+        submitBtn.classList.add("show");
+
+        chooseBtn.textContent = "Choose another PDF";
+    }
+
+
+    /* --------------------------------
+       REMOVE FILE
+    -------------------------------- */
+
+    removeFile.addEventListener("click", function () {
+
+        fileInput.value = "";
+
+        selectedFile.classList.remove("show");
+
+        submitBtn.classList.remove("show");
+
+        chooseBtn.textContent = "Choose PDF";
+
+    });
+
+
+    /* --------------------------------
+       DRAG OVER
+    -------------------------------- */
+
+    dropZone.addEventListener("dragover", function (event) {
+
+        event.preventDefault();
+
+        dropZone.classList.add("dragover");
+
+    });
+
+
+    /* --------------------------------
+       DRAG LEAVE
+    -------------------------------- */
+
+    dropZone.addEventListener("dragleave", function () {
+
+        dropZone.classList.remove("dragover");
+
+    });
+
+
+    /* --------------------------------
+       DROP
+    -------------------------------- */
+
+    dropZone.addEventListener("drop", function (event) {
+
+        event.preventDefault();
+
+        dropZone.classList.remove("dragover");
+
+        const files = event.dataTransfer.files;
+
+        if (!files || files.length === 0) {
+            return;
+        }
+
+        const file = files[0];
+
+        const dataTransfer = new DataTransfer();
+
+        dataTransfer.items.add(file);
+
+        fileInput.files = dataTransfer.files;
+
+        showSelectedFile(file);
+
+    });
+
+
+    /* --------------------------------
+       CLICK EMPTY AREA
+    -------------------------------- */
+
+    dropZone.addEventListener("click", function (event) {
+
+        if (
+            event.target === dropZone ||
+            event.target.classList.contains("upload-icon")
+        ) {
+
+            fileInput.click();
+
+        }
+
+    });
+
+
+</script>
 
 </body>
 </html>
+```
