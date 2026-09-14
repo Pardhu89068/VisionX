@@ -11,32 +11,23 @@ from flask import (
 import os
 import io
 import uuid
-from datetime import datetime
 
 from flask_login import (
     LoginManager,
     login_user,
     logout_user,
     login_required,
+    logout_user,
     current_user
 )
 
 from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
-
 from cryptography.fernet import Fernet
-
 from werkzeug.utils import secure_filename
-
 from sqlalchemy import inspect
 
 from models import db, User, VaultFile
-
-from classifier import classify_text
-from sensitivity import detect_sensitivity
-from purpose import detect_purpose
-from retention import recommend_retention
-from ai_analyzer import ai_analyze_document
 
 from document_extractor import (
     extract_text,
@@ -44,9 +35,11 @@ from document_extractor import (
     is_analysis_supported
 )
 
+from intelligence import generate_intelligence
+
 
 # =========================================================
-# ENVIRONMENT
+# LOAD ENVIRONMENT
 # =========================================================
 
 load_dotenv()
@@ -58,20 +51,23 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.config["SECRET_KEY"] = os.getenv(
-    "FLASK_SECRET_KEY",
-    "visionx-secret-key-change-later"
-)
+
+# =========================================================
+# APP CONFIGURATION
+# =========================================================
+
+app.config["SECRET_KEY"] = "visionx-secret-key-change-later"
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///visionx.db"
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Maximum normal upload size = 50 MB
+# Maximum upload size = 50 MB
 app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 
 # =========================================================
-# NORMAL UPLOAD STORAGE
+# NORMAL DOCUMENT STORAGE
 # =========================================================
 
 UPLOAD_FOLDER = "uploads"
@@ -99,7 +95,7 @@ os.makedirs(
 
 
 # =========================================================
-# VAULT ENCRYPTION
+# VAULT ENCRYPTION KEY
 # =========================================================
 
 VAULT_ENCRYPTION_KEY = os.getenv(
@@ -110,6 +106,7 @@ if not VAULT_ENCRYPTION_KEY:
     raise RuntimeError(
         "VAULT_ENCRYPTION_KEY is missing from .env"
     )
+
 
 try:
 
@@ -194,41 +191,17 @@ with app.app_context():
 
     db.create_all()
 
-    # -----------------------------------------------------
-    # Repair old VaultFile timestamps
-    # -----------------------------------------------------
-
-    old_vault_files = VaultFile.query.filter(
-        VaultFile.created_at.is_(None)
-    ).all()
-
-    if old_vault_files:
-
-        for vault_file in old_vault_files:
-
-            vault_file.created_at = datetime.utcnow()
-
-        db.session.commit()
-
-        print(
-            f"Repaired "
-            f"{len(old_vault_files)} old VaultFile "
-            f"timestamp(s)."
-        )
-
-    # -----------------------------------------------------
-    # Ensure security_pin_hash exists
-    # -----------------------------------------------------
-
     inspector = inspect(
         db.engine
     )
 
+    # -----------------------------------------
+    # SECURITY PIN MIGRATION
+    # -----------------------------------------
+
     user_columns = [
         column["name"]
-        for column in inspector.get_columns(
-            "user"
-        )
+        for column in inspector.get_columns("user")
     ]
 
     if "security_pin_hash" not in user_columns:
@@ -236,85 +209,118 @@ with app.app_context():
         with db.engine.begin() as connection:
 
             connection.exec_driver_sql(
-                """
-                ALTER TABLE user
-                ADD COLUMN security_pin_hash VARCHAR(255)
-                """
+                "ALTER TABLE user "
+                "ADD COLUMN security_pin_hash VARCHAR(255)"
             )
 
         print(
             "Security PIN column added successfully."
         )
 
+    # -----------------------------------------
+    # VAULT CREATED_AT REPAIR
+    # -----------------------------------------
+
+    try:
+
+        with db.engine.begin() as connection:
+
+            connection.exec_driver_sql(
+                "UPDATE vault_file "
+                "SET created_at = CURRENT_TIMESTAMP "
+                "WHERE created_at IS NULL"
+            )
+
+    except Exception as error:
+
+        print(
+            "Vault timestamp repair skipped:",
+            error
+        )
+
 
 # =========================================================
-# HELPER — UNIQUE NORMAL UPLOAD NAME
+# HELPER FUNCTIONS
 # =========================================================
 
-def make_unique_upload_filename(
-    filename
-):
+def make_unique_upload_filename(filename):
 
-    safe_filename = secure_filename(
+    """
+    Prevent filename collisions.
+
+    Example:
+        resume.pdf
+        resume_1.pdf
+        resume_2.pdf
+    """
+
+    safe_name = secure_filename(
         filename
     )
 
-    if not safe_filename:
+    if not safe_name:
 
-        safe_filename = (
-            f"document_{uuid.uuid4().hex}"
-        )
+        return None
 
-    original_path = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        safe_filename
+    base, extension = os.path.splitext(
+        safe_name
     )
 
-    if not os.path.exists(
-        original_path
-    ):
-
-        return safe_filename
-
-    base_name, extension = os.path.splitext(
-        safe_filename
-    )
+    candidate = safe_name
 
     counter = 1
 
-    while True:
-
-        new_filename = (
-            f"{base_name}_{counter}"
-            f"{extension}"
-        )
-
-        new_path = os.path.join(
+    while os.path.exists(
+        os.path.join(
             app.config["UPLOAD_FOLDER"],
-            new_filename
+            candidate
         )
+    ):
 
-        if not os.path.exists(
-            new_path
-        ):
-
-            return new_filename
+        candidate = (
+            f"{base}_{counter}{extension}"
+        )
 
         counter += 1
 
+    return candidate
 
-# =========================================================
-# HELPER — NORMAL FILE ANALYSIS
-# =========================================================
 
-def analyze_file(filename):
+def get_analysis_result(filename):
+
+    """
+    Extract text from a file and run
+    VisionX Intelligence V2.
+    """
 
     file_path = os.path.join(
         app.config["UPLOAD_FOLDER"],
         filename
     )
 
+    if not os.path.exists(file_path):
+
+        return {
+            "filename": filename,
+            "supported": False,
+            "file_type": get_file_type_label(filename),
+            "message": "File not found.",
+            "text": "",
+            "document_type": "Unavailable",
+            "confidence": 0,
+            "confidence_label": "Unavailable",
+            "risk_flags": [],
+            "risk_count": 0,
+            "key_information": [],
+            "recommended_action": "Review",
+            "summary": "The requested file could not be found."
+        }
+
     file_type = get_file_type_label(
+        filename
+    )
+
+    supported = is_analysis_supported(
         filename
     )
 
@@ -322,131 +328,137 @@ def analyze_file(filename):
         file_path
     )
 
-    # -----------------------------------------------------
-    # Unsupported analysis format
-    # -----------------------------------------------------
-
-    if not extraction["supported"]:
+    if not extraction.get("supported"):
 
         return {
-
             "filename": filename,
-
+            "supported": False,
             "file_type": file_type,
-
-            "category": "Unavailable",
-
-            "sensitivity": "Unknown",
-
-            "purpose": "Unknown",
-
-            "retention": "Store",
-
-            "ai_type": "Analysis unavailable",
-
-            "ai_confidence": "—",
-
-            "analysis_available": False,
-
-            "extraction_message": extraction[
-                "message"
-            ],
-
-            "text_available": False
+            "message": extraction.get(
+                "message",
+                "Analysis is unavailable for this file type."
+            ),
+            "text": "",
+            "document_type": "Unavailable",
+            "confidence": 0,
+            "confidence_label": "Unavailable",
+            "risk_flags": [],
+            "risk_count": 0,
+            "key_information": [],
+            "recommended_action": "Store securely",
+            "summary": (
+                "This file can be stored in VisionX, "
+                "but automatic analysis is unavailable "
+                "for this format."
+            )
         }
 
-    text = (
-        extraction.get("text") or ""
-    ).strip()
-
-    # -----------------------------------------------------
-    # Supported format but no readable text
-    # -----------------------------------------------------
-
-    if not text:
+    if not supported:
 
         return {
-
             "filename": filename,
-
+            "supported": False,
             "file_type": file_type,
-
-            "category": "General",
-
-            "sensitivity": "Low",
-
-            "purpose": "General",
-
-            "retention": "Review",
-
-            "ai_type": "General Document",
-
-            "ai_confidence": "Low",
-
-            "analysis_available": True,
-
-            "extraction_message": extraction[
-                "message"
-            ],
-
-            "text_available": False
+            "message": (
+                "Analysis is unavailable for this "
+                "file type."
+            ),
+            "text": "",
+            "document_type": "Unavailable",
+            "confidence": 0,
+            "confidence_label": "Unavailable",
+            "risk_flags": [],
+            "risk_count": 0,
+            "key_information": [],
+            "recommended_action": "Store securely",
+            "summary": (
+                "This file format is not currently "
+                "supported by the VisionX analysis engine."
+            )
         }
 
-    # -----------------------------------------------------
-    # Existing VisionX intelligence engine
-    # -----------------------------------------------------
-
-    category = classify_text(
-        text
+    text = extraction.get(
+        "text",
+        ""
     )
 
-    sensitivity = detect_sensitivity(
-        text
-    )
+    if not text.strip():
 
-    purpose = detect_purpose(
-        text
-    )
+        return {
+            "filename": filename,
+            "supported": True,
+            "file_type": file_type,
+            "message": extraction.get(
+                "message",
+                "No readable text was extracted."
+            ),
+            "text": "",
+            "document_type": "Unreadable Document",
+            "confidence": 0,
+            "confidence_label": "Low",
+            "risk_flags": [],
+            "risk_count": 0,
+            "key_information": [],
+            "recommended_action": "Review",
+            "summary": (
+                "VisionX could not extract enough "
+                "readable text to perform intelligent analysis."
+            )
+        }
 
-    retention = recommend_retention(
-        category,
-        sensitivity,
-        purpose
-    )
-
-    ai_result = ai_analyze_document(
+    intelligence = generate_intelligence(
         text
     )
 
     return {
-
         "filename": filename,
-
+        "supported": True,
         "file_type": file_type,
+        "message": extraction.get(
+            "message",
+            "Text extracted successfully."
+        ),
+        "text": text,
 
-        "category": category,
+        "document_type": intelligence.get(
+            "document_type",
+            "General Document"
+        ),
 
-        "sensitivity": sensitivity,
+        "confidence": intelligence.get(
+            "confidence",
+            0
+        ),
 
-        "purpose": purpose,
+        "confidence_label": intelligence.get(
+            "confidence_label",
+            "Medium"
+        ),
 
-        "retention": retention,
+        "risk_flags": intelligence.get(
+            "risk_flags",
+            []
+        ),
 
-        "ai_type": ai_result[
-            "document_type"
-        ],
+        "risk_count": intelligence.get(
+            "risk_count",
+            0
+        ),
 
-        "ai_confidence": ai_result[
-            "confidence"
-        ],
+        "key_information": intelligence.get(
+            "key_information",
+            []
+        ),
 
-        "analysis_available": True,
+        "recommended_action": intelligence.get(
+            "recommended_action",
+            "Review"
+        ),
 
-        "extraction_message": extraction[
-            "message"
-        ],
-
-        "text_available": True
+        "summary": intelligence.get(
+            "summary",
+            "No intelligence summary available."
+        )
     }
 
 
@@ -486,7 +498,17 @@ def login():
             password
         ):
 
-            login_user(user)
+            login_user(
+                user
+            )
+
+            # Security PIN is requested
+            # only once during normal login.
+            if not user.security_pin_hash:
+
+                return redirect(
+                    url_for("pin_setup")
+                )
 
             return redirect(
                 url_for("dashboard")
@@ -521,6 +543,10 @@ def google_login():
     )
 
 
+# =========================================================
+# GOOGLE CALLBACK
+# =========================================================
+
 @app.route(
     "/auth/google/callback"
 )
@@ -528,9 +554,7 @@ def google_callback():
 
     try:
 
-        token = (
-            google.authorize_access_token()
-        )
+        token = google.authorize_access_token()
 
         user_info = token.get(
             "userinfo"
@@ -561,6 +585,10 @@ def google_callback():
             email=email
         ).first()
 
+        # -----------------------------------------
+        # CREATE GOOGLE USER
+        # -----------------------------------------
+
         if not user:
 
             user = User(
@@ -572,11 +600,21 @@ def google_callback():
                 os.urandom(24).hex()
             )
 
-            db.session.add(user)
+            db.session.add(
+                user
+            )
 
             db.session.commit()
 
-        login_user(user)
+        login_user(
+            user
+        )
+
+        if not user.security_pin_hash:
+
+            return redirect(
+                url_for("pin_setup")
+            )
 
         return redirect(
             url_for("dashboard")
@@ -632,9 +670,7 @@ def register():
 
             return render_template(
                 "register.html",
-                error=(
-                    "Please fill all fields."
-                )
+                error="Please fill all fields."
             )
 
         if len(password) < 6:
@@ -667,14 +703,18 @@ def register():
             password
         )
 
-        db.session.add(user)
+        db.session.add(
+            user
+        )
 
         db.session.commit()
 
-        login_user(user)
+        login_user(
+            user
+        )
 
         return redirect(
-            url_for("dashboard")
+            url_for("pin_setup")
         )
 
     return render_template(
@@ -692,9 +732,6 @@ def register():
 )
 @login_required
 def pin_setup():
-
-    # Existing PIN users do not need
-    # to create another PIN.
 
     if current_user.security_pin_hash:
 
@@ -718,20 +755,14 @@ def pin_setup():
 
             return render_template(
                 "pin_setup.html",
-                error=(
-                    "PIN must contain "
-                    "numbers only."
-                )
+                error="PIN must contain numbers only."
             )
 
         if len(pin) != 6:
 
             return render_template(
                 "pin_setup.html",
-                error=(
-                    "PIN must contain "
-                    "exactly 6 digits."
-                )
+                error="PIN must contain exactly 6 digits."
             )
 
         if pin != confirm_pin:
@@ -794,8 +825,7 @@ def forgot_password():
             return render_template(
                 "forgot_password.html",
                 error=(
-                    "No account found "
-                    "with this email."
+                    "No account found with this email."
                 )
             )
 
@@ -804,14 +834,22 @@ def forgot_password():
             return render_template(
                 "forgot_password.html",
                 error=(
-                    "Security PIN is not "
+                    "Recovery PIN has not been "
                     "configured for this account."
                 )
             )
 
-        session["reset_user_id"] = user.id
+        session.pop(
+            "reset_user_id",
+            None
+        )
 
-        session["pin_verified"] = False
+        session.pop(
+            "pin_verified",
+            None
+        )
+
+        session["reset_user_id"] = user.id
 
         return redirect(
             url_for("verify_pin")
@@ -823,7 +861,7 @@ def forgot_password():
 
 
 # =========================================================
-# VERIFY SECURITY PIN
+# VERIFY RECOVERY PIN
 # =========================================================
 
 @app.route(
@@ -832,11 +870,11 @@ def forgot_password():
 )
 def verify_pin():
 
-    reset_user_id = session.get(
+    user_id = session.get(
         "reset_user_id"
     )
 
-    if not reset_user_id:
+    if not user_id:
 
         return redirect(
             url_for("forgot_password")
@@ -844,13 +882,26 @@ def verify_pin():
 
     user = db.session.get(
         User,
-        reset_user_id
+        user_id
     )
 
     if not user:
 
+        session.clear()
+
+        return redirect(
+            url_for("forgot_password")
+        )
+
+    if not user.security_pin_hash:
+
         session.pop(
             "reset_user_id",
+            None
+        )
+
+        session.pop(
+            "pin_verified",
             None
         )
 
@@ -877,7 +928,7 @@ def verify_pin():
 
         return render_template(
             "verify_pin.html",
-            error="Incorrect Security PIN."
+            error="Incorrect recovery PIN."
         )
 
     return render_template(
@@ -895,7 +946,7 @@ def verify_pin():
 )
 def reset_password():
 
-    reset_user_id = session.get(
+    user_id = session.get(
         "reset_user_id"
     )
 
@@ -903,7 +954,7 @@ def reset_password():
         "pin_verified"
     )
 
-    if not reset_user_id or not pin_verified:
+    if not user_id or not pin_verified:
 
         return redirect(
             url_for("forgot_password")
@@ -911,20 +962,12 @@ def reset_password():
 
     user = db.session.get(
         User,
-        reset_user_id
+        user_id
     )
 
     if not user:
 
-        session.pop(
-            "reset_user_id",
-            None
-        )
-
-        session.pop(
-            "pin_verified",
-            None
-        )
+        session.clear()
 
         return redirect(
             url_for("forgot_password")
@@ -932,7 +975,7 @@ def reset_password():
 
     if request.method == "POST":
 
-        password = request.form.get(
+        new_password = request.form.get(
             "password",
             ""
         )
@@ -942,7 +985,7 @@ def reset_password():
             ""
         )
 
-        if len(password) < 6:
+        if len(new_password) < 6:
 
             return render_template(
                 "reset_password.html",
@@ -952,7 +995,7 @@ def reset_password():
                 )
             )
 
-        if password != confirm_password:
+        if new_password != confirm_password:
 
             return render_template(
                 "reset_password.html",
@@ -960,7 +1003,7 @@ def reset_password():
             )
 
         user.set_password(
-            password
+            new_password
         )
 
         db.session.commit()
@@ -1002,383 +1045,7 @@ def logout():
 
 
 # =========================================================
-# DASHBOARD
-# =========================================================
-
-@app.route(
-    "/dashboard"
-)
-@login_required
-def dashboard():
-
-    files = os.listdir(
-        app.config["UPLOAD_FOLDER"]
-    )
-
-    documents = []
-
-    for filename in files:
-
-        file_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            filename
-        )
-
-        if not os.path.isfile(
-            file_path
-        ):
-
-            continue
-
-        try:
-
-            result = analyze_file(
-                filename
-            )
-
-            documents.append(
-                result
-            )
-
-        except Exception as error:
-
-            print(
-                "Error analyzing",
-                filename,
-                ":",
-                error
-            )
-
-            documents.append({
-
-                "filename": filename,
-
-                "file_type": get_file_type_label(
-                    filename
-                ),
-
-                "category": "Unavailable",
-
-                "sensitivity": "Unknown",
-
-                "purpose": "Unknown",
-
-                "retention": "Store",
-
-                "ai_type": "Analysis unavailable",
-
-                "ai_confidence": "—",
-
-                "analysis_available": False,
-
-                "extraction_message": (
-                    "This file could not "
-                    "be analysed."
-                ),
-
-                "text_available": False
-            })
-
-    # -----------------------------------------------------
-    # Statistics
-    # -----------------------------------------------------
-
-    total_documents = len(
-        documents
-    )
-
-    high_count = sum(
-        1
-        for document in documents
-        if document["sensitivity"] == "High"
-    )
-
-    medium_count = sum(
-        1
-        for document in documents
-        if document["sensitivity"] == "Medium"
-    )
-
-    low_count = sum(
-        1
-        for document in documents
-        if document["sensitivity"] == "Low"
-    )
-
-    # -----------------------------------------------------
-    # Category counts
-    # -----------------------------------------------------
-
-    category_counts = {}
-
-    for document in documents:
-
-        category = document[
-            "category"
-        ]
-
-        category_counts[category] = (
-            category_counts.get(
-                category,
-                0
-            ) + 1
-        )
-
-    # -----------------------------------------------------
-    # Purpose counts
-    # -----------------------------------------------------
-
-    purpose_counts = {}
-
-    for document in documents:
-
-        purpose = document[
-            "purpose"
-        ]
-
-        purpose_counts[purpose] = (
-            purpose_counts.get(
-                purpose,
-                0
-            ) + 1
-        )
-
-    return render_template(
-
-        "dashboard.html",
-
-        documents=documents,
-
-        total_documents=total_documents,
-
-        high_count=high_count,
-
-        medium_count=medium_count,
-
-        low_count=low_count,
-
-        category_counts=category_counts,
-
-        purpose_counts=purpose_counts
-    )
-
-
-# =========================================================
-# NORMAL UPLOAD
-# =========================================================
-
-@app.route(
-    "/upload",
-    methods=["GET", "POST"]
-)
-@login_required
-def upload():
-
-    if request.method == "POST":
-
-        file = request.files.get(
-            "file"
-        )
-
-        if not file:
-
-            return redirect(
-                url_for("upload")
-            )
-
-        if not file.filename:
-
-            return redirect(
-                url_for("upload")
-            )
-
-        filename = make_unique_upload_filename(
-            file.filename
-        )
-
-        file_path = os.path.join(
-            app.config["UPLOAD_FOLDER"],
-            filename
-        )
-
-        try:
-
-            file.save(
-                file_path
-            )
-
-        except Exception as error:
-
-            print(
-                "Upload Error:",
-                error
-            )
-
-            return (
-                "File upload failed. "
-                "Check the terminal for details."
-            )
-
-        # Directly open analysis after upload
-        return redirect(
-            url_for(
-                "analyze",
-                filename=filename
-            )
-        )
-
-    return render_template(
-        "upload.html"
-    )
-
-
-# =========================================================
-# ANALYZE DOCUMENT
-# =========================================================
-
-@app.route(
-    "/analyze/<path:filename>"
-)
-@login_required
-def analyze(filename):
-
-    safe_filename = secure_filename(
-        filename
-    )
-
-    if not safe_filename:
-
-        return "Invalid filename"
-
-    file_path = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        safe_filename
-    )
-
-    if not os.path.exists(
-        file_path
-    ):
-
-        return "File not found"
-
-    try:
-
-        result = analyze_file(
-            safe_filename
-        )
-
-    except Exception as error:
-
-        print(
-            "Analysis Error:",
-            error
-        )
-
-        return (
-            "Analysis failed. "
-            "Check the terminal for details."
-        )
-
-    return render_template(
-
-        "analysis.html",
-
-        filename=result[
-            "filename"
-        ],
-
-        file_type=result[
-            "file_type"
-        ],
-
-        category=result[
-            "category"
-        ],
-
-        sensitivity=result[
-            "sensitivity"
-        ],
-
-        purpose=result[
-            "purpose"
-        ],
-
-        retention=result[
-            "retention"
-        ],
-
-        ai_type=result[
-            "ai_type"
-        ],
-
-        ai_confidence=result[
-            "ai_confidence"
-        ],
-
-        analysis_available=result[
-            "analysis_available"
-        ],
-
-        extraction_message=result[
-            "extraction_message"
-        ],
-
-        text_available=result[
-            "text_available"
-        ]
-    )
-
-
-# =========================================================
-# DELETE NORMAL ANALYSIS FILE
-# =========================================================
-
-@app.route(
-    "/delete/<path:filename>",
-    methods=["POST"]
-)
-@login_required
-def delete_file(filename):
-
-    safe_filename = secure_filename(
-        filename
-    )
-
-    if not safe_filename:
-
-        return redirect(
-            url_for("dashboard")
-        )
-
-    file_path = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        safe_filename
-    )
-
-    if os.path.exists(
-        file_path
-    ):
-
-        try:
-
-            os.remove(
-                file_path
-            )
-
-        except Exception as error:
-
-            print(
-                "Delete Error:",
-                error
-            )
-
-    return redirect(
-        url_for("dashboard")
-    )
-
-
-# =========================================================
-# PRIVATE VAULT ENTRY
+# PRIVATE VAULT LOGIN
 # =========================================================
 
 @app.route(
@@ -1400,12 +1067,14 @@ def vault():
             return render_template(
                 "vault.html",
                 error=(
-                    "Please enter your "
-                    "Vault password."
+                    "Please enter your Vault password."
                 )
             )
 
-        # First-time Vault setup
+        # -----------------------------------------
+        # FIRST VAULT SETUP
+        # -----------------------------------------
+
         if not current_user.vault_password_hash:
 
             current_user.set_vault_password(
@@ -1418,7 +1087,10 @@ def vault():
                 url_for("vault_storage")
             )
 
-        # Existing Vault
+        # -----------------------------------------
+        # EXISTING VAULT
+        # -----------------------------------------
+
         if current_user.check_vault_password(
             vault_password
         ):
@@ -1460,7 +1132,7 @@ def vault_storage():
 
 
 # =========================================================
-# VAULT UPLOAD
+# VAULT FILE UPLOAD
 # =========================================================
 
 @app.route(
@@ -1496,30 +1168,13 @@ def vault_upload():
             url_for("vault_storage")
         )
 
-    try:
-
-        file_data = file.read()
-
-    except Exception as error:
-
-        print(
-            "Vault read error:",
-            error
-        )
-
-        return redirect(
-            url_for("vault_storage")
-        )
+    file_data = file.read()
 
     if not file_data:
 
         return redirect(
             url_for("vault_storage")
         )
-
-    # -----------------------------------------------------
-    # Encrypt before storing
-    # -----------------------------------------------------
 
     encrypted_data = vault_fernet.encrypt(
         file_data
@@ -1535,31 +1190,14 @@ def vault_upload():
         stored_filename
     )
 
-    try:
+    with open(
+        stored_path,
+        "wb"
+    ) as encrypted_file:
 
-        with open(
-            stored_path,
-            "wb"
-        ) as encrypted_file:
-
-            encrypted_file.write(
-                encrypted_data
-            )
-
-    except Exception as error:
-
-        print(
-            "Vault storage error:",
-            error
+        encrypted_file.write(
+            encrypted_data
         )
-
-        return redirect(
-            url_for("vault_storage")
-        )
-
-    # -----------------------------------------------------
-    # Database record
-    # -----------------------------------------------------
 
     vault_file = VaultFile(
 
@@ -1574,11 +1212,7 @@ def vault_upload():
             or "unknown"
         ),
 
-        file_size=len(
-            file_data
-        ),
-
-        created_at=datetime.utcnow()
+        file_size=len(file_data)
     )
 
     db.session.add(
@@ -1593,7 +1227,7 @@ def vault_upload():
 
 
 # =========================================================
-# VAULT DOWNLOAD / DECRYPT
+# VAULT FILE DOWNLOAD
 # =========================================================
 
 @app.route(
@@ -1605,11 +1239,7 @@ def vault_download(file_id):
     vault_file = VaultFile.query.filter_by(
         id=file_id,
         user_id=current_user.id
-    ).first()
-
-    if not vault_file:
-
-        return "Vault file not found", 404
+    ).first_or_404()
 
     stored_path = os.path.join(
         app.config["VAULT_FOLDER"],
@@ -1620,35 +1250,25 @@ def vault_download(file_id):
         stored_path
     ):
 
-        return "Encrypted file not found", 404
+        return "Vault file not found"
+
+    with open(
+        stored_path,
+        "rb"
+    ) as encrypted_file:
+
+        encrypted_data = encrypted_file.read()
 
     try:
 
-        with open(
-            stored_path,
-            "rb"
-        ) as encrypted_file:
-
-            encrypted_data = (
-                encrypted_file.read()
-            )
-
-        decrypted_data = (
-            vault_fernet.decrypt(
-                encrypted_data
-            )
+        decrypted_data = vault_fernet.decrypt(
+            encrypted_data
         )
 
-    except Exception as error:
-
-        print(
-            "Vault decrypt error:",
-            error
-        )
+    except Exception:
 
         return (
-            "Could not decrypt this file.",
-            500
+            "Unable to decrypt this Vault file."
         )
 
     return send_file(
@@ -1657,21 +1277,20 @@ def vault_download(file_id):
             decrypted_data
         ),
 
-        as_attachment=True,
-
         download_name=(
             vault_file.original_filename
         ),
 
         mimetype=(
             vault_file.file_type
-            or "application/octet-stream"
-        )
+        ),
+
+        as_attachment=True
     )
 
 
 # =========================================================
-# VAULT DELETE
+# VAULT FILE DELETE
 # =========================================================
 
 @app.route(
@@ -1684,38 +1303,21 @@ def vault_delete(file_id):
     vault_file = VaultFile.query.filter_by(
         id=file_id,
         user_id=current_user.id
-    ).first()
-
-    if not vault_file:
-
-        return redirect(
-            url_for("vault_storage")
-        )
+    ).first_or_404()
 
     stored_path = os.path.join(
         app.config["VAULT_FOLDER"],
         vault_file.stored_filename
     )
 
-    # Delete encrypted physical file
     if os.path.exists(
         stored_path
     ):
 
-        try:
+        os.remove(
+            stored_path
+        )
 
-            os.remove(
-                stored_path
-            )
-
-        except Exception as error:
-
-            print(
-                "Vault delete error:",
-                error
-            )
-
-    # Delete database record
     db.session.delete(
         vault_file
     )
@@ -1728,23 +1330,365 @@ def vault_delete(file_id):
 
 
 # =========================================================
-# FILE SIZE ERROR
+# DASHBOARD
 # =========================================================
 
-@app.errorhandler(
-    413
+@app.route(
+    "/dashboard"
 )
-def request_entity_too_large(error):
+@login_required
+def dashboard():
 
-    return (
-        "File is too large. "
-        "VisionX allows files up to 50 MB.",
-        413
+    files = os.listdir(
+        app.config["UPLOAD_FOLDER"]
+    )
+
+    documents = []
+
+    for filename in files:
+
+        file_path = os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            filename
+        )
+
+        if not os.path.isfile(
+            file_path
+        ):
+
+            continue
+
+        try:
+
+            result = get_analysis_result(
+                filename
+            )
+
+            documents.append(
+                result
+            )
+
+        except Exception as error:
+
+            print(
+                "Dashboard analysis error:",
+                filename,
+                error
+            )
+
+            documents.append({
+
+                "filename": filename,
+
+                "supported": False,
+
+                "file_type": get_file_type_label(
+                    filename
+                ),
+
+                "message": (
+                    "Automatic analysis failed."
+                ),
+
+                "text": "",
+
+                "document_type": "Unavailable",
+
+                "confidence": 0,
+
+                "confidence_label": "Unavailable",
+
+                "risk_flags": [],
+
+                "risk_count": 0,
+
+                "key_information": [],
+
+                "recommended_action": "Review",
+
+                "summary": (
+                    "VisionX could not analyze "
+                    "this file automatically."
+                )
+            })
+
+    # =====================================================
+    # DASHBOARD STATISTICS
+    # =====================================================
+
+    total_documents = len(
+        documents
+    )
+
+    high_count = sum(
+
+        1
+
+        for doc in documents
+
+        if any(
+            flag.get("level") == "High"
+            for flag in doc.get(
+                "risk_flags",
+                []
+            )
+            if isinstance(flag, dict)
+        )
+    )
+
+    medium_count = sum(
+
+        1
+
+        for doc in documents
+
+        if any(
+            flag.get("level") == "Medium"
+            for flag in doc.get(
+                "risk_flags",
+                []
+            )
+            if isinstance(flag, dict)
+        )
+    )
+
+    low_count = max(
+        total_documents
+        - high_count
+        - medium_count,
+        0
+    )
+
+    category_counts = {}
+
+    purpose_counts = {}
+
+    document_type_counts = {}
+
+    for doc in documents:
+
+        document_type = doc.get(
+            "document_type",
+            "General Document"
+        )
+
+        document_type_counts[
+            document_type
+        ] = (
+            document_type_counts.get(
+                document_type,
+                0
+            ) + 1
+        )
+
+    return render_template(
+
+        "dashboard.html",
+
+        documents=documents,
+
+        total_documents=total_documents,
+
+        high_count=high_count,
+
+        medium_count=medium_count,
+
+        low_count=low_count,
+
+        category_counts=category_counts,
+
+        purpose_counts=purpose_counts,
+
+        document_type_counts=document_type_counts
     )
 
 
 # =========================================================
-# RUN
+# NORMAL MULTI-FORMAT UPLOAD
+# =========================================================
+
+@app.route(
+    "/upload",
+    methods=["GET", "POST"]
+)
+@login_required
+def upload():
+
+    if request.method == "POST":
+
+        file = request.files.get(
+            "file"
+        )
+
+        if not file or file.filename == "":
+
+            return redirect(
+                url_for("upload")
+            )
+
+        filename = make_unique_upload_filename(
+            file.filename
+        )
+
+        if not filename:
+
+            return redirect(
+                url_for("upload")
+            )
+
+        file_path = os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            filename
+        )
+
+        try:
+
+            file.save(
+                file_path
+            )
+
+        except Exception as error:
+
+            print(
+                "Upload error:",
+                error
+            )
+
+            return redirect(
+                url_for("upload")
+            )
+
+        return redirect(
+            url_for(
+                "analyze",
+                filename=filename
+            )
+        )
+
+    return render_template(
+        "upload.html"
+    )
+
+
+# =========================================================
+# ANALYZE DOCUMENT
+# =========================================================
+
+@app.route(
+    "/analyze/<path:filename>"
+)
+@login_required
+def analyze(filename):
+
+    safe_filename = secure_filename(
+        filename
+    )
+
+    file_path = os.path.join(
+        app.config["UPLOAD_FOLDER"],
+        safe_filename
+    )
+
+    if not os.path.exists(
+        file_path
+    ):
+
+        return "File not found", 404
+
+    result = get_analysis_result(
+        safe_filename
+    )
+
+    return render_template(
+
+        "analysis.html",
+
+        filename=result["filename"],
+
+        file_type=result["file_type"],
+
+        supported=result["supported"],
+
+        extraction_message=result["message"],
+
+        document_type=result["document_type"],
+
+        confidence=result["confidence"],
+
+        confidence_label=result["confidence_label"],
+
+        risk_flags=result["risk_flags"],
+
+        risk_count=result["risk_count"],
+
+        key_information=result["key_information"],
+
+        recommended_action=result["recommended_action"],
+
+        summary=result["summary"]
+    )
+
+
+# =========================================================
+# DELETE NORMAL DOCUMENT
+# =========================================================
+
+@app.route(
+    "/delete/<path:filename>",
+    methods=["POST", "GET"]
+)
+@login_required
+def delete_file(filename):
+
+    safe_filename = secure_filename(
+        filename
+    )
+
+    file_path = os.path.join(
+        app.config["UPLOAD_FOLDER"],
+        safe_filename
+    )
+
+    if os.path.exists(
+        file_path
+    ):
+
+        try:
+
+            os.remove(
+                file_path
+            )
+
+        except Exception as error:
+
+            print(
+                "Delete error:",
+                error
+            )
+
+    return redirect(
+        url_for("dashboard")
+    )
+
+
+# =========================================================
+# 413 — FILE TOO LARGE
+# =========================================================
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+
+    return render_template(
+        "upload.html",
+        error=(
+            "File is too large. "
+            "Maximum allowed size is 50 MB."
+        )
+    ), 413
+
+
+# =========================================================
+# RUN APPLICATION
 # =========================================================
 
 if __name__ == "__main__":

@@ -1,292 +1,786 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
 
-    <title>VisionX - File Analysis</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Analysis — VISIONX</title>
 
     <style>
 
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f7fb;
-            color: #111827;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(76, 110, 245, 0.15), transparent 30%),
+                radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.12), transparent 30%),
+                #050816;
+            color: #f5f7ff;
         }
 
-        .header {
-            background: #111827;
-            color: white;
-            padding: 22px 40px;
+        .page {
+            width: min(1180px, 94%);
+            margin: auto;
+            padding: 35px 0 60px;
         }
 
-        .logo {
+        /* HEADER */
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .brand {
             font-size: 28px;
-            font-weight: bold;
+            font-weight: 800;
+            letter-spacing: 4px;
         }
 
-        .subtitle {
-            font-size: 13px;
-            opacity: 0.7;
-            margin-top: 4px;
-        }
-
-        .container {
-            width: 90%;
-            max-width: 900px;
-            margin: 40px auto;
-        }
-
-        .title {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .title h1 {
-            margin-bottom: 8px;
-        }
-
-        .title p {
-            color: #6b7280;
-        }
-
-        .ai-card {
-            background: #111827;
-            color: white;
-            padding: 25px;
-            border-radius: 14px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
-        }
-
-        .ai-card h2 {
-            margin-top: 0;
-        }
-
-        .ai-result {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .ai-box {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 18px;
-            border-radius: 10px;
-        }
-
-        .result-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-        }
-
-        .result-card {
-            background: white;
-            padding: 22px;
-            border-radius: 12px;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .label {
-            display: block;
-            color: #6b7280;
-            font-size: 13px;
-            margin-bottom: 8px;
-        }
-
-        .value {
-            font-size: 20px;
-            font-weight: bold;
+        .brand span {
+            color: #7c8cff;
         }
 
         .back {
-            display: block;
-            width: fit-content;
-            margin: 30px auto 0;
-            padding: 11px 18px;
-            background: #111827;
-            color: white;
             text-decoration: none;
-            border-radius: 8px;
+            color: #dbe2ff;
+            padding: 11px 18px;
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 12px;
+            background: rgba(255,255,255,.05);
         }
 
-        @media (max-width: 700px) {
+        .back:hover {
+            background: rgba(255,255,255,.1);
+        }
 
-            .result-grid,
-            .ai-result {
+        /* HERO */
+
+        .hero {
+            padding: 28px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,.1);
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(124,140,255,.12),
+                    rgba(255,255,255,.025)
+                );
+            box-shadow: 0 25px 80px rgba(0,0,0,.35);
+            margin-bottom: 22px;
+        }
+
+        .eyebrow {
+            color: #8d9aff;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 2px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .filename {
+            font-size: 27px;
+            font-weight: 700;
+            word-break: break-word;
+            margin-bottom: 15px;
+        }
+
+        .file-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pill {
+            padding: 8px 13px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.07);
+            border: 1px solid rgba(255,255,255,.1);
+            color: #cbd3f7;
+            font-size: 13px;
+        }
+
+        /* MESSAGE */
+
+        .message {
+            padding: 15px 18px;
+            border-radius: 14px;
+            margin: 20px 0;
+            background: rgba(255,255,255,.045);
+            border: 1px solid rgba(255,255,255,.08);
+            color: #bfc8eb;
+        }
+
+        /* SECTION */
+
+        .section-title {
+            margin: 32px 0 15px;
+            font-size: 20px;
+        }
+
+        .section-subtitle {
+            color: #8790ae;
+            margin-top: -8px;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        /* CARDS */
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .card {
+            min-height: 145px;
+            padding: 22px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,.09);
+            background: rgba(255,255,255,.035);
+            box-shadow: 0 15px 45px rgba(0,0,0,.2);
+        }
+
+        .card-label {
+            font-size: 12px;
+            color: #858eaa;
+            text-transform: uppercase;
+            letter-spacing: 1.3px;
+            margin-bottom: 13px;
+        }
+
+        .card-value {
+            font-size: 24px;
+            font-weight: 750;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+
+        .card-description {
+            margin-top: 10px;
+            color: #929bb8;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* CONFIDENCE */
+
+        .confidence-number {
+            font-size: 35px;
+            font-weight: 800;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,.08);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 16px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            width: {{ confidence|default(0)|int }}%;
+            background: linear-gradient(
+                90deg,
+                #6875ff,
+                #9a7cff
+            );
+            border-radius: inherit;
+        }
+
+        /* SUMMARY */
+
+        .summary {
+            padding: 25px;
+            border-radius: 22px;
+            border: 1px solid rgba(124,140,255,.16);
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(124,140,255,.09),
+                    rgba(255,255,255,.025)
+                );
+            line-height: 1.7;
+            color: #cbd2ed;
+        }
+
+        .summary strong {
+            color: white;
+        }
+
+        /* RISK FLAGS */
+
+        .risk-box {
+            padding: 22px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,.09);
+            background: rgba(255,255,255,.035);
+        }
+
+        .risk-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .risk {
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.1);
+            font-size: 13px;
+        }
+
+        .risk-high {
+            border-color: rgba(255,90,90,.35);
+            background: rgba(255,90,90,.08);
+        }
+
+        .risk-medium {
+            border-color: rgba(255,190,70,.35);
+            background: rgba(255,190,70,.08);
+        }
+
+        .risk-low {
+            border-color: rgba(80,210,150,.3);
+            background: rgba(80,210,150,.07);
+        }
+
+        .no-data {
+            color: #858eaa;
+            font-size: 14px;
+        }
+
+        /* KEY INFORMATION */
+
+        .info-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .info-item {
+            padding: 16px;
+            border-radius: 14px;
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.08);
+        }
+
+        .info-name {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .info-detail {
+            color: #8d96b3;
+            font-size: 13px;
+        }
+
+        /* ACTION */
+
+        .action {
+            padding: 25px;
+            border-radius: 22px;
+            border: 1px solid rgba(124,140,255,.2);
+            background: rgba(124,140,255,.07);
+        }
+
+        .action-title {
+            color: #8996ff;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+        }
+
+        .action-value {
+            font-size: 25px;
+            font-weight: 800;
+        }
+
+        /* UNAVAILABLE */
+
+        .unavailable {
+            text-align: center;
+            padding: 55px 25px;
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,.1);
+            background: rgba(255,255,255,.035);
+        }
+
+        .unavailable-icon {
+            font-size: 45px;
+            margin-bottom: 15px;
+        }
+
+        .unavailable h2 {
+            margin-bottom: 10px;
+        }
+
+        .unavailable p {
+            color: #8e97b3;
+            line-height: 1.6;
+        }
+
+        /* FOOTER */
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #59627e;
+            font-size: 12px;
+        }
+
+        /* RESPONSIVE */
+
+        @media (max-width: 850px) {
+
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .info-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 560px) {
+
+            .page {
+                width: 92%;
+                padding-top: 22px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .brand {
+                font-size: 22px;
+            }
+
+            .filename {
+                font-size: 21px;
+            }
+
+            .grid {
                 grid-template-columns: 1fr;
             }
 
+            .hero,
+            .card,
+            .summary,
+            .risk-box,
+            .action {
+                border-radius: 17px;
+            }
         }
 
     </style>
-
 </head>
-
 
 <body>
 
+<div class="page">
 
-    <div class="header">
+    <!-- ================================================= -->
+    <!-- HEADER -->
+    <!-- ================================================= -->
 
-        <div class="logo">
-            VISIONX
+    <div class="topbar">
+
+        <div class="brand">
+            VISION<span>X</span>
         </div>
 
-        <div class="subtitle">
-            Intelligent Document Analysis System
-        </div>
+        <a
+            href="{{ url_for('dashboard') }}"
+            class="back"
+        >
+            ← Dashboard
+        </a>
 
     </div>
 
 
+    <!-- ================================================= -->
+    <!-- FILE HERO -->
+    <!-- ================================================= -->
 
-    <div class="container">
+    <section class="hero">
+
+        <div class="eyebrow">
+            Intelligence Analysis
+        </div>
+
+        <div class="filename">
+            {{ filename|default('Unknown file') }}
+        </div>
+
+        <div class="file-meta">
+
+            <div class="pill">
+                {{ file_type|default('Unknown') }}
+            </div>
+
+            {% if supported %}
+                <div class="pill">
+                    ✓ Analysis Available
+                </div>
+            {% else %}
+                <div class="pill">
+                    Analysis Unavailable
+                </div>
+            {% endif %}
+
+        </div>
+
+    </section>
 
 
-        <div class="title">
+    <!-- ================================================= -->
+    <!-- EXTRACTION MESSAGE -->
+    <!-- ================================================= -->
 
-            <h1>
-                Document Analysis
-            </h1>
+    {% if extraction_message %}
 
-            <p>
-                📄 {{ filename }}
-            </p>
+        <div class="message">
+            {{ extraction_message }}
+        </div>
+
+    {% endif %}
+
+
+    {% if supported %}
+
+        <!-- ============================================= -->
+        <!-- INTELLIGENCE OVERVIEW -->
+        <!-- ============================================= -->
+
+        <h2 class="section-title">
+            Intelligence Overview
+        </h2>
+
+        <p class="section-subtitle">
+            VisionX analyzed the extracted content using
+            the local Intelligence V2 engine.
+        </p>
+
+
+        <div class="grid">
+
+            <!-- DOCUMENT TYPE -->
+
+            <div class="card">
+
+                <div class="card-label">
+                    Document Type
+                </div>
+
+                <div class="card-value">
+                    {{ document_type|default('General Document') }}
+                </div>
+
+                <div class="card-description">
+                    Detected from the content and structure
+                    of the document.
+                </div>
+
+            </div>
+
+
+            <!-- CONFIDENCE -->
+
+            <div class="card">
+
+                <div class="card-label">
+                    Confidence
+                </div>
+
+                <div class="confidence-number">
+                    {{ confidence|default(0) }}%
+                </div>
+
+                <div class="card-description">
+                    {{ confidence_label|default('Medium') }}
+                    confidence
+                </div>
+
+                <div class="confidence-bar">
+
+                    <div class="confidence-fill"></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RECOMMENDED ACTION -->
+
+            <div class="card">
+
+                <div class="card-label">
+                    Recommended Action
+                </div>
+
+                <div class="card-value">
+                    {{ recommended_action|default('Review') }}
+                </div>
+
+                <div class="card-description">
+                    Suggested next step based on
+                    document intelligence.
+                </div>
+
+            </div>
 
         </div>
 
 
+        <!-- ============================================= -->
+        <!-- INTELLIGENCE SUMMARY -->
+        <!-- ============================================= -->
 
-        <!-- AI ANALYSIS -->
+        <h2 class="section-title">
+            Intelligence Summary
+        </h2>
 
-        <div class="ai-card">
+        <div class="summary">
+
+            <strong>VISIONX insight:</strong>
+
+            <br><br>
+
+            {{ summary|default(
+                'No intelligence summary is available for this document.'
+            ) }}
+
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- RISK FLAGS -->
+        <!-- ============================================= -->
+
+        <h2 class="section-title">
+            Risk & Privacy Signals
+        </h2>
+
+        <p class="section-subtitle">
+            Potentially sensitive information detected
+            inside the document.
+        </p>
+
+        <div class="risk-box">
+
+            {% if risk_flags and risk_flags|length > 0 %}
+
+                <div class="risk-list">
+
+                    {% for flag in risk_flags %}
+
+                        {% if flag is mapping %}
+
+                            <div class="
+                                risk
+                                {% if flag.level == 'High' %}
+                                    risk-high
+                                {% elif flag.level == 'Medium' %}
+                                    risk-medium
+                                {% else %}
+                                    risk-low
+                                {% endif %}
+                            ">
+
+                                {% if flag.level %}
+                                    <strong>
+                                        {{ flag.level }}
+                                    </strong>
+                                    —
+                                {% endif %}
+
+                                {{ flag.name|default(
+                                    flag.label|default(
+                                        'Privacy signal'
+                                    )
+                                ) }}
+
+                            </div>
+
+                        {% else %}
+
+                            <div class="risk">
+                                {{ flag }}
+                            </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="no-data">
+                    ✓ No major privacy signals detected.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <!-- ============================================= -->
+        <!-- KEY INFORMATION -->
+        <!-- ============================================= -->
+
+        <h2 class="section-title">
+            Key Information
+        </h2>
+
+        <p class="section-subtitle">
+            Important content signals identified by
+            VisionX.
+        </p>
+
+        {% if key_information and key_information|length > 0 %}
+
+            <div class="info-list">
+
+                {% for item in key_information %}
+
+                    {% if item is mapping %}
+
+                        <div class="info-item">
+
+                            <div class="info-name">
+                                {{ item.name|default(
+                                    item.label|default(
+                                        'Information'
+                                    )
+                                ) }}
+                            </div>
+
+                            {% if item.value %}
+
+                                <div class="info-detail">
+                                    {{ item.value }}
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="info-item">
+
+                            <div class="info-name">
+                                {{ item }}
+                            </div>
+
+                        </div>
+
+                    {% endif %}
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="risk-box">
+
+                <div class="no-data">
+                    No additional key information was detected.
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- ============================================= -->
+        <!-- ACTION -->
+        <!-- ============================================= -->
+
+        <h2 class="section-title">
+            Recommended Handling
+        </h2>
+
+        <div class="action">
+
+            <div class="action-title">
+                VisionX recommendation
+            </div>
+
+            <div class="action-value">
+                {{ recommended_action|default('Review') }}
+            </div>
+
+        </div>
+
+
+    {% else %}
+
+        <!-- ============================================= -->
+        <!-- UNSUPPORTED -->
+        <!-- ============================================= -->
+
+        <div class="unavailable">
+
+            <div class="unavailable-icon">
+                ◈
+            </div>
 
             <h2>
-                🤖 AI Document Analysis
+                Analysis Unavailable
             </h2>
 
             <p>
-                AI-assisted document identification
-                and confidence assessment.
+                {{ extraction_message|default(
+                    'VisionX cannot analyze this file format yet.'
+                ) }}
             </p>
 
+            <br>
 
-            <div class="ai-result">
-
-
-                <div class="ai-box">
-
-                    <span class="label">
-                        Document Type
-                    </span>
-
-                    <strong>
-                        {{ ai_type }}
-                    </strong>
-
-                </div>
-
-
-                <div class="ai-box">
-
-                    <span class="label">
-                        Confidence
-                    </span>
-
-                    <strong>
-                        {{ ai_confidence }}
-                    </strong>
-
-                </div>
-
-
-            </div>
+            <p>
+                The file can still be stored safely in
+                your VisionX Vault.
+            </p>
 
         </div>
 
+    {% endif %}
 
 
-        <!-- STANDARD ANALYSIS -->
+    <!-- ================================================= -->
+    <!-- FOOTER -->
+    <!-- ================================================= -->
 
-        <div class="result-grid">
+    <div class="footer">
 
-
-            <div class="result-card">
-
-                <span class="label">
-                    Category
-                </span>
-
-                <div class="value">
-                    {{ category }}
-                </div>
-
-            </div>
-
-
-            <div class="result-card">
-
-                <span class="label">
-                    Sensitivity
-                </span>
-
-                <div class="value">
-                    {{ sensitivity }}
-                </div>
-
-            </div>
-
-
-            <div class="result-card">
-
-                <span class="label">
-                    Purpose
-                </span>
-
-                <div class="value">
-                    {{ purpose }}
-                </div>
-
-            </div>
-
-
-            <div class="result-card">
-
-                <span class="label">
-                    Retention Recommendation
-                </span>
-
-                <div class="value">
-                    {{ retention }}
-                </div>
-
-            </div>
-
-
-        </div>
-
-
-
-        <a
-            class="back"
-            href="{{ url_for('dashboard') }}"
-        >
-
-            ← Back to Dashboard
-
-        </a>
-
+        VISIONX • Local Document Intelligence
 
     </div>
 
+</div>
 
 </body>
-
 </html>
