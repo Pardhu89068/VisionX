@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -143,5 +145,6 @@ class VaultFile(db.Model):
 
     created_at = db.Column(
         db.DateTime,
-        server_default=db.func.now()
+        nullable=False,
+        default=datetime.utcnow
     )
