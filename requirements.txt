@@ -10,3 +10,5 @@ SQLAlchemy
 gunicorn
 openai
 requests
+
+anthropic
